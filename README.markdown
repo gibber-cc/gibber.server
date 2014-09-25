@@ -6,6 +6,7 @@ This is the server component for Gibber. After downloading, run `npm install` in
 To use from top level of repo: 
 
 `cd node_modules/gibber.server`
+
 `node . 8080`
 
 You can substitute a port of your choice for `8080` in the above line.
