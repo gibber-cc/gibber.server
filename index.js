@@ -15,13 +15,15 @@ var request         = require( 'request' ),
     // _url            = 'http://localhost:5984/gibber',
     _url            = 'http://127.0.0.1:5984/gibber',
     webServerPort   =  process.argv[2] || 80, //second argument passed to command
-    serverRoot      = __dirname + "/../../../",
+    serverRoot      = __dirname + '/../../',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/',
     queryString     = require('querystring'),
     chat            = null;
 
 gibber.server = server
 require( './chat.js' )
+
+console.log( serverRoot )
 
 sharejs.attach( app, { db: {type:'none' }, browserChannel: { cors:'*' } } )
 
@@ -141,7 +143,7 @@ function escapeString( string ) {
 var oneDay = 86400000;
 app.engine('htm', require('ejs').renderFile);
 app.configure( function() {
-  app.set('views', serverRoot + '/snippets')
+  app.set('views', serverRoot + 'snippets/')
   app.set('view engine', 'ejs')
   //app.use(express.logger())
   
@@ -167,7 +169,7 @@ app.configure( function() {
   
 app.get( '/', function(req, res){
   var path
-  // console.log( req.query )
+  console.log( req.query )
   
   //console.log( req.query )
   if( req.query ) {
