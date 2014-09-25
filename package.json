@@ -1,0 +1,33 @@
+{
+  "name": "gibber.server",
+  "version": "0.0.1",
+  "description": "server component for Gibber",
+  "main": "index.js",
+  "dependencies": {
+    "browserchannel": "~1.0.8",
+    "ejs": "~0.8.4",
+    "connect": "~2.9.0",
+    "express": "~3.4.0",
+    "passport": "~0.1.17",
+    "passport-local": "~0.1.6",
+    "share": "~0.6.3",
+    "request": "~2.27.0",
+    "socket.io": "~0.9.16"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/charlieroberts/gibber.server.git"
+  },
+  "keywords": [
+    "gibber"
+  ],
+  "author": "Charlie Roberts <charlie@charlie-roberts.com> (http://www.charlie-roberts.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/charlieroberts/gibber.server/issues"
+  }
+}
