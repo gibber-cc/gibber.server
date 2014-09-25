@@ -61,16 +61,17 @@ var makeUsers = function(cb) {
 
 // test publications
 var makePubs = function(cb) {
-  for(var i = 0; i < 10; i++) {
+  var maxPubs = 10
+  for(var i = 0; i < maxPubs; i++) {
     (function() {
       var _i = i;
-      var name = names[ Math.floor( Math.random() * names.length ) ],
+      var name = 'gibber', //names[ Math.floor( Math.random() * names.length ) ],
           line = lines[ Math.floor( Math.random() * lines.length ) ]
       
       //console.log(name, line)
                
       if( typeof pubCount[ name ] === 'undefined') { pubCount[ name ] = 0 } else { pubCount[ name ]++ }
-      request.post({url:serverAdddress, json:{
+      request.post({url:serverAddress, json:{
           _id: name + '/publications/pub' + pubCount[ name ],
           name: pubCount[ name ],
           author: name,
@@ -83,7 +84,7 @@ var makePubs = function(cb) {
             console.log( error ) 
           } else { 
             //console.log( body ) 
-            if( _i === 29) {
+            if( _i === maxPubs - 1) {
               console.log( "PUBS MADE" )
               if(cb) cb()
             }
@@ -95,20 +96,18 @@ var makePubs = function(cb) {
 }
 
 var makeDesign = function(cb) {
-  var design = {
-    _id : "_design/" + databaseName,
-    views : {
-      foo : {
-        map : "function(doc){ emit(doc._id, doc._rev)}"
-      }
-    }
-  }
+  // var design = {
+  //   _id : "_design/" + databaseName,
+  //   views : {
+  //     foo : {
+  //       map : "function(doc){ emit(doc._id, doc._rev) }"
+  //     }
+  //   }
+  // }
   
   request.put({ 
     url: serverAddress + '/_design/test', 
     json: {
-      "_id": "_design/test",
-      "_rev": "48-59bebe4325d83ceb6506fd07c916d589",
       "views": {
         "users": {
           "map": function(doc) {
@@ -184,15 +183,15 @@ var makeDesign = function(cb) {
             }
           }.toString()
         }
-      },
-    },
-    function (error, response, body) {
-      if( error ) { 
-        console.log( "CREATING DESIGN ERROR:", error ) 
-      } else { 
-        console.log( "CREATING DESIGN:", body ) 
-        if(cb) cb()
       }
+    }
+  },
+  function(error, response, body) {
+    if( error ) { 
+      console.log( "CREATING DESIGN ERROR:", error ) 
+    } else { 
+      console.log( "CREATING DESIGN:", body ) 
+      if(cb) cb()
     }
   })
 }
