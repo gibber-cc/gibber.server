@@ -1,11 +1,11 @@
-(function() {
+module.exports = function( Gibber ) {
 
 var Chat = {
   rooms : {},
   users : {},
   usersByNick : {},
-  io  : require( 'socket.io' ).listen( gibber.server ),
-  server: gibber.server, 
+  io  : require( 'socket.io' ).listen( Gibber.server ),
+  server: Gibber.server, 
   sendall : function( msg ) {
     for( var ip in Chat.users ) {
       Chat.users[ ip ].send( msg )
@@ -14,7 +14,7 @@ var Chat = {
   heartbeat : function() {
     var time = Date.now()
     for( var room in Chat.rooms ) {
-      if( room !== 'gibber' ) {
+      if( room !== 'Gibber' ) {
         var _room = Chat.rooms[ room ]
         if( time - _room.timestamp > 300000 && _room.clients.length === 0 ) {
           console.log( 'deleting room', room )
@@ -43,6 +43,7 @@ var Chat = {
     return false
   },
   init : function() {
+    console.log("CHATROOM INIT")
     Chat.io.sockets.on( 'connection', function( client ) {
       client.ip = client.handshake.address.address
       console.log( 'CONNECTION', client.ip )
@@ -70,13 +71,11 @@ var Chat = {
       })
     })
 
-    Chat.rooms[ 'gibber' ] = {
+    Chat.rooms[ 'Gibber' ] = {
       clients : [],
       password: null
     }
     Chat.heartbeat()
-
-    gibber.chat = Chat
   },
   handlers : {
     register : function( client, msg ) {
@@ -281,4 +280,5 @@ var Chat = {
 
 Chat.init()
 
-})()
+return Chat
+}

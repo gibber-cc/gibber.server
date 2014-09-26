@@ -21,9 +21,7 @@ var request         = require( 'request' ),
     chat            = null;
 
 gibber.server = server
-require( './chat.js' )
-
-console.log( serverRoot )
+require( './chat.js' )( gibber )
 
 sharejs.attach( app, { db: {type:'none' }, browserChannel: { cors:'*' } } )
 
@@ -110,11 +108,12 @@ passport.use(new LocalStrategy(
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
-    res.header('Access-Control-Allow-Origin', ["http://localhost:8080"]);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Origin', ["http://localhost:8080"]);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
    // res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
-    next();
+  res.header('Access-Control-Allow-Credentials', 'true')
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
+  next();
 }
 
 var checkForREST = function( req, res, next ) {
@@ -169,7 +168,7 @@ app.configure( function() {
   
 app.get( '/', function(req, res){
   var path
-  console.log( req.query )
+  //console.log( req.query )
   
   //console.log( req.query )
   if( req.query ) {
@@ -468,7 +467,7 @@ app.get( '/browser', function( req, res, next ) {
             }
           }
           
-          console.log( req )
+          //console.log( req )
           if( req.user ) {
             console.log("USER ACCOUNT")
             request( 'http://localhost:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', function(e,r,_b) {
@@ -487,11 +486,11 @@ app.get( '/browser', function( req, res, next ) {
             console.log("NO USER ACCOUNT")
             res.render( 'browser', {
               user: req.user,
-              demos:demos,
-              audio:_audio,
-              _2d:_2d,
-              _3d:_3d,
-              misc:_misc,
+              demos: demos,
+              audio: _audio,
+              _2d: _2d,
+              _3d: _3d,
+              misc: _misc,
               userfiles:[],
               recent:recent,
             });

@@ -20,3 +20,5 @@ To run the server, go to the top level of the Gibber repo that you installed `gi
 You can substitute a port of your choice for `8080` in the above line. Now, if everything turns out OK, you can open `127.0.0.1:8080` in a browser and Gibber will be running.
 
 However, most likely you'll need one final step. In the `environment.js` file of the main Gibber repo, there's a property called `SERVER_URL`. You'll need to set this to whatever the IP address is of the server your running. Or, if you're running gibber.server and Gibber in your browser on the same machine, just set this value to be `127.0.0.1`.
+
+Note to self:ejs must be version 0.8.4... using ~0.8.4 will mess things up.
