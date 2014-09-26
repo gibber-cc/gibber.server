@@ -1,31 +1,23 @@
-gibber = {}
-
 var request         = require( 'request' ),
     connect         = require( 'connect' ),
     url             = require( 'url' ),
     fs              = require( 'fs' ),
     passport        = require( 'passport' ),
-    //flash           = require( 'connect-flash' ),
     express         = require( 'express' ),
     sharejs         = require( 'share' ).server,
     app             = express(),
     server          = require( 'http' ).createServer( app ),
     util            = require( 'util' ),
     LocalStrategy   = require( 'passport-local' ).Strategy,
-    // _url            = 'http://localhost:5984/gibber',
     _url            = 'http://127.0.0.1:5984/gibber',
     webServerPort   =  process.argv[2] || 80, //second argument passed to command
     serverRoot      = __dirname + '/../../',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/',
     queryString     = require('querystring'),
-    chat            = null;
-
-gibber.server = server
-require( './chat.js' )( gibber )
-
-sharejs.attach( app, { db: {type:'none' }, browserChannel: { cors:'*' } } )
-
-var users = [] 
+    chat            = require( './chat.js' )( server ),
+    users           = [],
+    nodemailer      = require( 'nodemailer' ),
+    transporter     = nodemailer.createTransport();
 
 function findById(id, fn) {
   var idx = id;
@@ -265,6 +257,26 @@ app.get( '/recent', function( req, res ) {
 
 app.get( '/account', ensureAuthenticated, function(req, res){
   res.render('account', { user: req.user });
+})
+
+app.post( '/requestPassword', function(req, res){
+  request( 'http://localhost:5984/gibber/' + req.body.username, function(e,r,_b) {
+    var data = JSON.parse( _b ),
+        password = data.password,
+        email = data.email
+    
+    if( typeof email === 'undefined' || email === '' ) {
+      res.send({ result:'fail', msg:'You did not specify an email account for password reminders. Please contact an administrator if you need access to this account.'})
+    }else{
+      transporter.sendMail({
+        from: 'gibber@gibber.mat.ucsb.edu',
+        to: email,
+        subject:'gibber password reminder',
+        text:'As requested, your gibber password is ' + password + '.'
+      })       
+      res.send({ result:'success', msg:'An email with your password been sent to ' + email })
+    }
+  })
 })
 
 app.get( '/login', function(req, res){
@@ -648,20 +660,12 @@ app.get('/logout', function(req, res, next){
     req.logout();
     res.send({ msg:'logout complete' })
   }else{
-    console.log( "There wasn't any user... " )
+    //console.log( "There wasn't any user... " )
     res.send({ msg:'you aren\t logged in... how did you even try to logout?' })
   }
   
   //res.redirect('/');
 });
-
-// app.post('/publish', function( req, res, next ) {
-//   console.log( "PUBLISHING", req.body, req.user.username )
-//   res.send({ msg:'published.' })
-// })
-
-server.listen( webServerPort );
-
 
 // Simple route middleware to ensure user is authenticated.
 //   Use this route middleware on any resource that needs to be protected.  If
@@ -673,20 +677,7 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login')
 }
 
-/*
-  if( req.uri.pathname === "/__newuser" ) {
-    //console.log(req.body)
-    
-    console.log(" NEW USER ")
-    request.post({url:'http://localhost:5984/gibber/', json:req.body},
-      function (error, response, body) {
-        if( error ) { 
-          console.log( error ) 
-        } else { 
-          //if(_i === names.length -1) {
-          //  console.log("USERS MADE")
-          //  if(cb) cb()
-          //}
-        }
-      }
-*/
+nodemailer.sendmail = true
+server.listen( webServerPort )
+chat.init()
+sharejs.attach( app, { db: {type:'none' }, browserChannel: { cors:'*' } } )
