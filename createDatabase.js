@@ -1,5 +1,5 @@
 var request         = require( 'request' ),
-    databaseName    = 'gibber_db',
+    databaseName    = 'gibber',
     serverAddress   = 'http://localhost:5984/' + databaseName,
     names = [ 'gibber' ], // add more names if you want to just test the database
     lines = [
@@ -96,14 +96,6 @@ var makePubs = function(cb) {
 }
 
 var makeDesign = function(cb) {
-  // var design = {
-  //   _id : "_design/" + databaseName,
-  //   views : {
-  //     foo : {
-  //       map : "function(doc){ emit(doc._id, doc._rev) }"
-  //     }
-  //   }
-  // }
   
   request.put({ 
     url: serverAddress + '/_design/test', 
@@ -203,7 +195,7 @@ var testDesign = function(cb) {
   })
 }
 
-var testDatabase = function() {
+var creteDatabaseUsersAndPubs = function() {
   var next = 0,
       functions = [
         deleteDatabase,
@@ -223,4 +215,4 @@ var testDatabase = function() {
   cb()
 }
 
-testDatabase()
+creteDatabaseUsersAndPubs()
