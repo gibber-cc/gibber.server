@@ -1,3 +1,4 @@
+// NOTE: COOKIES DON'T WORKING USING LOCALHOST, MUST USE 127.0.0.1.
 var request         = require( 'request' ),
     connect         = require( 'connect' ),
     url             = require( 'url' ),
@@ -6,6 +7,7 @@ var request         = require( 'request' ),
     express         = require( 'express' ),
     sharejs         = require( 'share' ).server,
     app             = express(),
+    RedisStore      = require( 'connect-redis' )( express ),        
     server          = require( 'http' ).createServer( app ),
     util            = require( 'util' ),
     LocalStrategy   = require( 'passport-local' ).Strategy,
@@ -30,7 +32,7 @@ function findById(id, fn) {
 
 function findByUsername(username, fn) {
   request(
-    { uri:'http://localhost:5984/gibber/_design/test/_view/password?key="'+username+'"', json: true }, 
+    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/password?key="'+username+'"', json: true }, 
     function(e,r,b) {
       //console.log(b.rows)
       if(b.rows && b.rows.length === 1) {
@@ -46,7 +48,7 @@ function findByUsername(username, fn) {
 
 function findByTag( tag, fn ) {
    request(
-    { uri:'http://localhost:5984/gibber/_design/test/_view/tagged', json: true }, 
+    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/tagged', json: true }, 
     function(e,r,b) {
       // console.log(b.rows)
       var results = []
@@ -67,10 +69,14 @@ function findByTag( tag, fn ) {
 //   serialize users into and deserialize users out of the session.  Typically,
 //   this will be as simple as storing the user ID when serializing, and finding
 //   the user by ID when deserializing.
-passport.serializeUser( function(user, done) { done(null, user.id); } );
+passport.serializeUser( function(user, done) { 
+  done(null, user.id); 
+});
 
 passport.deserializeUser(function(id, done) {
-  findById(id, function (err, user) { done(err, user); } );
+  findById(id, function (err, user) { 
+    done(err, user); 
+  });
 });
 
 
@@ -89,9 +95,14 @@ passport.use(new LocalStrategy(
       // indicate failure and set a flash message.  Otherwise, return the
       // authenticated `user`.
       findByUsername(username, function(err, user) {
+        console.log( user, username, password )
         if (err) { return done(err); }
-        if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
-        if (user.password != password) { return done(null, false, { message: 'Invalid password' }); }
+        if (!user) { 
+          return done(null, false, { message: 'Unknown user ' + username }); 
+        }
+        if (user.password != password) { 
+          return done(null, false, { message: 'Invalid password' }); 
+        }
         return done(null, user);
       })
     });
@@ -100,7 +111,7 @@ passport.use(new LocalStrategy(
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', ["http://localhost:8080"]);
+  res.header('Access-Control-Allow-Origin', ["http://127.0.0.1:8080"]);
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
    // res.header('Access-Control-Allow-Headers', 'Content-Type');
   res.header('Access-Control-Allow-Credentials', 'true')
@@ -113,7 +124,7 @@ var checkForREST = function( req, res, next ) {
   if( arr[1] === 'gibber' ) {
     arr.shift(); arr.shift(); // get rid of first two elements, the first / and gibber/
     var url = escapeString( arr.join('/') )
-    request('http://localhost:5984/gibber/'+ url, function(err, response, body) {
+    request('http://127.0.0.1:5984/gibber/'+ url, function(err, response, body) {
       res.send( body )
       // res.redirect( 'http://gibber.mat.ucsb.edu/?url='+url, { loadFile: body } )
     })
@@ -139,12 +150,14 @@ app.configure( function() {
   //app.use(express.logger())
   
   app.use( express.cookieParser() )
-  app.use( express.bodyParser() )
   //app.use(express.methodOverride())
-  app.use( express.session({ secret: 'gibber gibberish gibbering' }) )
-  // Initialize Passport!  Also use passport.session() middleware, to support persistent login sessions (recommended)
+  app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
+  //{ /*,*/ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
+  app.use( express.bodyParser() )
+  
   app.use( passport.initialize() )
   app.use( passport.session() )
+  
   app.use( allowCrossDomain )
   app.use( app.router )
   app.use( checkForREST )
@@ -156,13 +169,9 @@ app.configure( function() {
   });
 })
 
-
-  
 app.get( '/', function(req, res){
   var path
-  //console.log( req.query )
-  
-  //console.log( req.query )
+
   if( req.query ) {
     if( req.query.path || req.query.p ) {
       path = req.query.path || req.query.p
@@ -173,7 +182,7 @@ app.get( '/', function(req, res){
         path = arr[0] + '/publications/' + arr[1]
       }
       
-      request('http://localhost:5984/gibber/' + escapeString( path ), function(err, response, body) {
+      request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
           res.render( 'index', { loadFile:body, isInstrument:_body.isInstrument || 'false' } )
@@ -190,7 +199,7 @@ app.get( '/', function(req, res){
         path = arr[0] + '/publications/' + arr[1]
       }
       
-      request('http://localhost:5984/gibber/' + escapeString( path ), function(err, response, body) {
+      request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
           res.render( 'index', { loadFile:body, isInstrument:true } )
@@ -201,7 +210,7 @@ app.get( '/', function(req, res){
     }else if( req.query.u || req.query.user ) {
       path = req.query.u || req.query.user
       
-      request( 'http://localhost:5984/gibber/_design/test/_view/publications?key=%22'+path+'%22', function(e,r,_b) {
+      request( 'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+path+'%22', function(e,r,_b) {
         res.render( 'instrumentBrowser', {
           user: path,
           userfiles:(JSON.parse(_b)).rows,
@@ -227,9 +236,8 @@ app.get( '/', function(req, res){
 
 app.get( '/tag', function( req, res ) { 
   if( req.query.tag ) {
-    // console.log( req.query.tag )
     request(
-      { uri:'http://localhost:5984/gibber/_design/test/_view/tagged', json: true }, 
+      { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/tagged', json: true }, 
       function(e,r,b) {
         var results = []
         if(b.rows && b.rows.length > 0) {
@@ -247,7 +255,7 @@ app.get( '/tag', function( req, res ) {
 
 app.get( '/recent', function( req, res ) {
   request(
-    { uri:'http://localhost:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
+    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
     function(e,r,b) {
       res.send({ results: b.rows })
       // console.log(b.rows)
@@ -260,7 +268,7 @@ app.get( '/account', ensureAuthenticated, function(req, res){
 })
 
 app.post( '/requestPassword', function(req, res){
-  request( 'http://localhost:5984/gibber/' + req.body.username, function(e,r,_b) {
+  request( 'http://127.0.0.1:5984/gibber/' + req.body.username, function(e,r,_b) {
     var data = JSON.parse( _b ),
         password = data.password,
         email = data.email
@@ -301,7 +309,7 @@ app.get( '/loginStatus', function( req, res ) {
 app.post( '/retrieve', function( req, res, next ) {
   // console.log( req.body )
   var suffix = req.body.address.replace(/\//g, '%2F'),
-      _url = 'http://localhost:5984/gibber/' + suffix
+      _url = 'http://127.0.0.1:5984/gibber/' + suffix
       
   
   if( _url.indexOf('%2Fpublications') === -1 ) { // shorthand to leave publications out of url
@@ -333,7 +341,7 @@ app.post( '/publish', function( req, res, next ) {
   //console.log( "USERNAME", req.body.username )
   
   request.post({ 
-      url:'http://localhost:5984/gibber/', 
+      url:'http://127.0.0.1:5984/gibber/', 
       json:{
         _id: req.body.username + '/publications/' + req.body.name,
         name: req.body.name,
@@ -372,7 +380,7 @@ app.post( '/update', function( req, res, next ) {
   var docName = req.body._id.split('/')
   
   request.put({ 
-      url:'http://localhost:5984/gibber/' + req.user.username + '%2Fpublications%2F' + docName[2], // must use username explicitly for security
+      url:'http://127.0.0.1:5984/gibber/' + req.user.username + '%2Fpublications%2F' + docName[2], // must use username explicitly for security
       json: req.body
     },
     function ( error, response, body ) {
@@ -392,16 +400,13 @@ app.post( '/update', function( req, res, next ) {
 })
 
 app.post( '/createNewUser', function( req, res, next ) { 
-  //console.log(" CREATING A NEW USER SHEESH" )
-  request.post({url:'http://localhost:5984/gibber/', json:req.body},
+  request.post({url:'http://127.0.0.1:5984/gibber/', json:req.body},
     function (error, response, body) {
       if( error ) { 
         console.log( error )
         res.send({ msg: 'The server was unable to create your account' }) 
       } else { 
         res.send({ msg:'User account ' + req.body._id + ' created' })
-          
-        // console.log("USER MADE")
       }
     }
   )
@@ -435,7 +440,7 @@ app.locals.inspect = require('util').inspect;
 
 app.get( '/browser', function( req, res, next ) {
   var demos = {}
-  request( 'http://localhost:5984/gibber/_design/test/_view/demos', function(e,r,b) {
+  request( 'http://127.0.0.1:5984/gibber/_design/test/_view/demos', function(e,r,b) {
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {
@@ -452,14 +457,14 @@ app.get( '/browser', function( req, res, next ) {
     
     demos.visual = visual; demos.audio = audio; demos.audiovisual = audiovisual;
     
-    request( { uri:'http://localhost:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
+    request( { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
       function(__e,__r,__b) {
         var recent = []
         for( var i = 0; i < __b.rows.length; i++ ){
           //console.log( __b.rows[i].value )
           recent.push( __b.rows[i].value )
         }
-        request( 'http://localhost:5984/gibber/_design/test/_view/tutorials', function(e,r,b) {
+        request( 'http://127.0.0.1:5984/gibber/_design/test/_view/tutorials', function(e,r,b) {
           // console.log( (JSON.parse(b)).rows )
           var _audio = [], _3d = [], _2d = [], _misc=[], demoRows = JSON.parse( b ).rows
 
@@ -478,11 +483,15 @@ app.get( '/browser', function( req, res, next ) {
               }
             }
           }
-          
-          //console.log( req )
+                    
           if( req.user ) {
-            console.log("USER ACCOUNT")
-            request( 'http://localhost:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', function(e,r,_b) {
+            //console.log("USER ACCOUNT")
+            request({ 
+              uri:'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', 
+              json:true 
+            },
+            function(e,r,_b) {
+              //console.log(_b)
               res.render( 'browser', {
                 user: req.user,
                 demos:demos,
@@ -490,14 +499,14 @@ app.get( '/browser', function( req, res, next ) {
                 _2d:_2d,
                 _3d:_3d,
                 misc:_misc,
-                userfiles:(JSON.parse(_b)).rows,
+                userfiles:_b.rows,
                 recent: recent, 
               });
             })
           }else{
-            console.log("NO USER ACCOUNT")
+            //console.log("NO USER ACCOUNT")
             res.render( 'browser', {
-              user: req.user,
+              user: null,
               demos: demos,
               audio: _audio,
               _2d: _2d,
@@ -512,6 +521,23 @@ app.get( '/browser', function( req, res, next ) {
   })
 })
 
+
+app.post( '/userfiles', function( req,res,next ) {
+  if( req.user && req.user.username ) {
+    request({ 
+      uri:'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', 
+      json:true 
+    },
+    function(e,r,_b) {
+      res.send({
+        files:_b.rows,
+      });
+    })
+  }else{
+    res.send({ msg:'No user is logged in. Cannot retrieve userfiles.' })
+  }
+})
+
 app.get( '/chat', function( req, res, next ) {
   var result = {}
   if( !req.user ) {
@@ -523,8 +549,7 @@ app.get( '/chat', function( req, res, next ) {
 })
 
 app.get( '/demos', function( req, res, next ) {
-  console.log('DEMOS')
-  request( 'http://localhost:5984/gibber/_design/test/_view/demos', function(e,r,b) {
+  request( 'http://127.0.0.1:5984/gibber/_design/test/_view/demos', function(e,r,b) {
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {
@@ -570,7 +595,7 @@ app.post( '/search', function( req, res, next) {
           var num = i,
               pubID = b.rows[ i ].id,
               suffix = pubID.replace(/\//g, '%2F'),
-              _url = 'http://localhost:5984/gibber/' + suffix
+              _url = 'http://127.0.0.1:5984/gibber/' + suffix
       
           _url += suffix.indexOf('?') > -1 ? "&revs_info=false" : "?revs_info=false"
   
@@ -647,7 +672,6 @@ app.post( '/login', function( req, res, next ) {
       res.send({ error:'Your username or password is incorrect. Please try again.' })
     }else{
       req.logIn( user, function() { 
-         console.log( "I AM LOGGED IN WTF ")
         res.send({ username: user.username }) 
       });
     }
@@ -655,7 +679,6 @@ app.post( '/login', function( req, res, next ) {
 })
 
 app.get('/logout', function(req, res, next){
-  console.log( "TRYING TO LOG OUT" )
   if( req.user ) {
     req.logout();
     res.send({ msg:'logout complete' })
