@@ -16,17 +16,19 @@ var request         = require( 'request' ),
     serverRoot      = __dirname + '/../../',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/',
     queryString     = require('querystring'),
-    chat            = require( './chat.js' )( server ),
+    rtc             = require( './gibber_rtc.js' )( server ),
     users           = [],
     nodemailer      = require( 'nodemailer' ),
-    transporter     = nodemailer.createTransport();
+    transporter     = nodemailer.createTransport(),
+    share           = require( './gibber_share' );
 
 function findById(id, fn) {
   var idx = id;
   if (users[idx]) {
     fn(null, users[idx]);
   } else {
-    fn(new Error('User ' + id + ' does not exist'));
+    fn( null, null )
+    //fn(new Error('User ' + id + ' does not exist'));
   }
 }
 
@@ -169,6 +171,8 @@ app.configure( function() {
   });
 })
 
+
+  
 app.get( '/', function(req, res){
   var path
 
@@ -702,5 +706,4 @@ function ensureAuthenticated(req, res, next) {
 
 nodemailer.sendmail = true
 server.listen( webServerPort )
-chat.init()
-sharejs.attach( app, { db: {type:'none' }, browserChannel: { cors:'*' } } )
+rtc.init()

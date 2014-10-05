@@ -1,38 +1,41 @@
+// Realtime Communication module for Gibber
+
 module.exports = function( Server ) {
 
-var Chat = {
+var Rtc = {
   rooms : {},
   users : {},
   usersByNick : {},
-  io  : require( 'socket.io' ).listen( Server ),
+  wsLibServer : require('ws').Server,
+  socket  : null,
   server: Server, 
   sendall : function( msg ) {
-    for( var ip in Chat.users ) {
-      Chat.users[ ip ].send( msg )
+    for( var ip in Rtc.users ) {
+      Rtc.users[ ip ].send( msg )
     }
   },
   heartbeat : function() {
     var time = Date.now()
-    for( var room in Chat.rooms ) {
+    for( var room in Rtc.rooms ) {
       if( room !== 'Gibber' ) {
         !function() {
-          var _room = Chat.rooms[ room ],
+          var _room = Rtc.rooms[ room ],
               roomName = room
               
           if( time - _room.timestamp > 3000 && _room.clients.length === 0 ) {
             console.log( 'deleting room', roomName )
-            delete Chat.rooms[ roomName ]
+            delete Rtc.rooms[ roomName ]
             var msg = { msg:'roomDeleted', room:roomName }
-            Chat.sendall( JSON.stringify( msg ) )
+            Rtc.sendall( JSON.stringify( msg ) )
           }
         }() 
       }
     }
-    setTimeout( Chat.heartbeat, 10000 ) 
+    setTimeout( Rtc.heartbeat, 10000 ) 
   },
   sendToRoom : function( msg, roomName ) {
     if( roomName && msg ) {
-      var room = Chat.rooms[ roomName ]
+      var room = Rtc.rooms[ roomName ]
       if( room ) {
         room.timestamp = Date.now()
         for( var i = 0; i < room.clients.length; i++ ){
@@ -47,10 +50,14 @@ var Chat = {
     return false
   },
   init : function() {
-    Chat.io.sockets.on( 'connection', function( client ) {
-      client.ip = client.handshake.address.address
+    Rtc.socket = new Rtc.wsLibServer({ server:Server })
+    
+    //Rtc.io.sockets.on( 'connection', function( client ) {
+    Rtc.socket.on( 'connection', function( client ) {
+      console.log( client.upgradeReq.headers.origin )
+      client.ip = client.upgradeReq.headers.origin//client.handshake.address.address
       console.log( 'CONNECTION', client.ip )
-      Chat.users[ client.ip ] = client
+      Rtc.users[ client.ip ] = client
 
       var msg = { connection: true }
 
@@ -58,33 +65,39 @@ var Chat = {
 
       client.on( 'message', function( _msg ) {
         var msg = JSON.parse( _msg )
-        Chat.handlers[ msg.cmd ]( client, msg )
+        
+        console.log( _msg, msg, client.TESTING )
+        Rtc.handlers[ msg.cmd ]( client, msg )
       })
-
+      
+      client.TESTING = 123
+      
       client.on( 'disconnect', function() {
-        if( Chat.rooms[ client.room ]  ) {
-          var idx = Chat.rooms[ client.room ].clients.indexOf( client )
+        if( Rtc.rooms[ client.room ]  ) {
+          var idx = Rtc.rooms[ client.room ].clients.indexOf( client )
           if( client.room ) {
-            Chat.rooms[ client.room ].clients.splice( idx , 1 )
+            Rtc.rooms[ client.room ].clients.splice( idx , 1 )
             var notification = JSON.stringify( { msg:'departure', nick:client.nick } )
-            Chat.sendToRoom( notification, client.room )
+            Rtc.sendToRoom( notification, client.room )
           }
         }
-        delete Chat.users[ client.ip ]
+        delete Rtc.users[ client.ip ]
       })
     })
 
-    Chat.rooms[ 'Gibber' ] = {
+    Rtc.rooms[ 'Gibber' ] = {
       clients : [],
       password: null
     }
-    Chat.heartbeat()
+    Rtc.heartbeat()    
   },
   handlers : {
     register : function( client, msg ) {
       client.nick = msg.nick
       
-      Chat.usersByNick[ client.nick ] = client
+      Rtc.usersByNick[ client.nick ] = client
+      
+      console.log("REGISTERED", client.nick )
 
       var msg = { msg:'registered', nickRegistered: client.nick }
 
@@ -94,41 +107,41 @@ var Chat = {
     joinRoom : function( client, msg ) {
       var response = null, occupants = []
 
-      if( Chat.rooms[ msg.room ] ) {
-        if( Chat.rooms[ msg.room ].password !== null ) {
-          if( Chat.rooms[ msg.room ].password === msg.password ) {
+      if( Rtc.rooms[ msg.room ] ) {
+        if( Rtc.rooms[ msg.room ].password !== null ) {
+          if( Rtc.rooms[ msg.room ].password === msg.password ) {
             client.room = msg.room
 
-            for( var i = 0; i < Chat.rooms[ msg.room ].clients.length; i++ ) {
-              occupants.push( Chat.rooms[ msg.room ].clients[ i ].nick )
+            for( var i = 0; i < Rtc.rooms[ msg.room ].clients.length; i++ ) {
+              occupants.push( Rtc.rooms[ msg.room ].clients[ i ].nick )
             }
-            if( Chat.rooms[ msg.room ].clients.indexOf( client ) === -1 ) {
-              Chat.rooms[ msg.room ].clients.push( client )
+            if( Rtc.rooms[ msg.room ].clients.indexOf( client ) === -1 ) {
+              Rtc.rooms[ msg.room ].clients.push( client )
             }
             response = { msg:'roomJoined', roomJoined: msg.room, occupants:occupants }
 
             notification = JSON.stringify( { msg:'arrival', nick:client.nick } )
 
-            Chat.sendToRoom( notification, msg.room )
+            Rtc.sendToRoom( notification, msg.room )
           }else{
             response = { msg:'roomJoined', roomJoined:null, error:'ERROR: The password you submitted to join ' + msg.room + ' was incorrect.' }
           }
         }else{
           client.room = msg.room
 
-          for( var i = 0; i < Chat.rooms[ msg.room ].clients.length; i++ ) {
-            occupants.push( Chat.rooms[ msg.room ].clients[ i ].nick )
+          for( var i = 0; i < Rtc.rooms[ msg.room ].clients.length; i++ ) {
+            occupants.push( Rtc.rooms[ msg.room ].clients[ i ].nick )
           }
 
-          if( Chat.rooms[ msg.room ].clients.indexOf( client ) === -1 ) {
-            Chat.rooms[ msg.room ].clients.push( client )
+          if( Rtc.rooms[ msg.room ].clients.indexOf( client ) === -1 ) {
+            Rtc.rooms[ msg.room ].clients.push( client )
           }
 
           response = { msg:'roomJoined', roomJoined: msg.room, occupants:occupants }
 
           notification = JSON.stringify( { msg:'arrival', nick:client.nick } )
 
-          Chat.sendToRoom( notification, msg.room )
+          Rtc.sendToRoom( notification, msg.room )
         }
       }else{
         response = { msg:'roomJoined', roomJoined: null, error:"ERROR: There is no room named " + msg.room + '.' }
@@ -140,17 +153,17 @@ var Chat = {
     leaveRoom : function( client, msg ) {
       var response = null, notification
 
-      if( Chat.rooms[ msg.room ] ) {
-        var idx = Chat.rooms[ msg.room ].clients.indexOf( client )
+      if( Rtc.rooms[ msg.room ] ) {
+        var idx = Rtc.rooms[ msg.room ].clients.indexOf( client )
 
         if( idx > -1 ) {
-          Chat.rooms[ msg.room ].clients.splice( idx, 1 )
+          Rtc.rooms[ msg.room ].clients.splice( idx, 1 )
 
           response = { msg:'roomLeft', roomLeft: msg.room }
           
           notification = JSON.stringify( { msg:'departure', nick:client.nick } )
 
-          Chat.sendToRoom( notification, msg.room )
+          Rtc.sendToRoom( notification, msg.room )
         }else{
           response = { msg:'roomLeft', roomLeft: null, error:'ERROR: The server tried to remove you from a room you weren\'t in' }
         }
@@ -162,11 +175,12 @@ var Chat = {
     },
     
     message : function( client, msg ) {
-      var room = Chat.rooms[ client.room ], result = false, response = null, _msg = null
+      var room = Rtc.rooms[ client.room ], result = false, response = null, _msg = null
       
-      _msg = JSON.stringify({ msg:'incomingMessage', incomingMessage:msg.text, nick:client.nick }) 
+      console.log("CLIENT NICK", client.nick)
+      _msg = JSON.stringify({ msg:'incomingMessage', incomingMessage:msg.text, nick:msg.user }) 
        
-      result = Chat.sendToRoom( _msg, client.room )
+      result = Rtc.sendToRoom( _msg, client.room )
 
       if( result ) {
         response = { msg:'messageSent', messageSent: msg.text, nick:client.nick }
@@ -179,7 +193,7 @@ var Chat = {
     collaborationRequest: function( client, msg ) {
       var from = msg.from, 
           to = msg.to,
-          room = Chat.rooms[ client.room ]
+          room = Rtc.rooms[ client.room ]
 
       for( var i = 0; i < room.clients.length; i++ ){
         var _client = room.clients[ i ]
@@ -190,7 +204,7 @@ var Chat = {
       }
     },
     collaborationResponse: function( client, msg ) {
-      var to = msg.to, room = Chat.rooms[ client.room ]
+      var to = msg.to, room = Rtc.rooms[ client.room ]
 
       for( var i = 0; i < room.clients.length; i++ ){
         var _client = room.clients[ i ]
@@ -202,7 +216,7 @@ var Chat = {
     },
     shareCreated: function( client, msg ) {
       // GE.Share.openDoc( msg.shareName )
-      var to = msg.to, room = Chat.rooms[ client.room ]
+      var to = msg.to, room = Rtc.rooms[ client.room ]
       for( var i = 0; i < room.clients.length; i++ ){
         var _client = room.clients[ i ]
         if( _client.nick === to ) {
@@ -214,8 +228,8 @@ var Chat = {
     createRoom : function( client, msg ) {
       var response = null, room = null, success = false
 
-      if( typeof Chat.rooms[ msg.name ] === 'undefined' ) {
-        Chat.rooms[ msg.name ] = {
+      if( typeof Rtc.rooms[ msg.name ] === 'undefined' ) {
+        Rtc.rooms[ msg.name ] = {
           clients : [],
           password: msg.password || null,
           timestamp: Date.now()
@@ -230,16 +244,16 @@ var Chat = {
       
       if( success ) {
         var msg = { msg:'roomAdded', roomAdded:msg.room }
-        Chat.sendall( JSON.stringify( msg ) )
+        Rtc.sendall( JSON.stringify( msg ) )
       }
     },
 
     listRooms : function( client, msg ) {
       var response = {}
-      for( var key in Chat.rooms ) {
+      for( var key in Rtc.rooms ) {
         response[ key ]  = { 
-          password: Chat.rooms[ key ].password !== null,
-          userCount : Chat.rooms[ key ].clients.length
+          password: Rtc.rooms[ key ].password !== null,
+          userCount : Rtc.rooms[ key ].clients.length
         }
       }
 
@@ -248,7 +262,7 @@ var Chat = {
 
     logout : function( client, msg ) {
       var response = null,
-          idx = Chat.rooms[ client.room ].clients.indexOf( client )
+          idx = Rtc.rooms[ client.room ].clients.indexOf( client )
 
       if( idx > -1 ) {
 
@@ -257,8 +271,8 @@ var Chat = {
 
     listUsers : function( client, msg ) {
       var reponse = null, _users = []
-      for( var key in Chat.users ) {
-        _users.push( Chat.users[ key ].nick )
+      for( var key in Rtc.users ) {
+        _users.push( Rtc.users[ key ].nick )
       }
 
       response = { msg:'listUsers', users:_users }
@@ -267,7 +281,7 @@ var Chat = {
     },
 
     remoteExecution : function( client, msg ) {
-      var to = Chat.usersByNick[ msg.to ],
+      var to = Rtc.usersByNick[ msg.to ],
           _msg = {
             from: msg.from,
             selectionRange : msg.selectionRange,
@@ -281,5 +295,5 @@ var Chat = {
   }
 }
 
-return Chat
+return Rtc
 }
