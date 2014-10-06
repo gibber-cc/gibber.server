@@ -15,7 +15,8 @@
     "connect-redis": "~1.4.7",
     "share-codemirror": "0.0.5",
     "livedb": "~0.4.8",
-    "querystring": "~0.2.0"
+    "querystring": "~0.2.0",
+    "ws": "~0.4.32"
   },
   "devDependencies": {},
   "scripts": {
