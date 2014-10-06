@@ -1,14 +1,103 @@
 // Realtime Communication module for Gibber
 
 module.exports = function( Server ) {
+  
+var Duplex = require( 'stream' ).Duplex,
+    livedb = require( 'livedb' ),
+    sharejs = require( 'share' ),
+    backend = livedb.client( livedb.memory() ),
+    share = sharejs.server.createClient({
+      backend: backend
+    })
 
 var Rtc = {
-  rooms : {},
+  rooms : { 
+    'Gibber' : {
+      clients : [],
+      password: null
+    }
+  },
   users : {},
   usersByNick : {},
   wsLibServer : require('ws').Server,
   socket  : null,
-  server: Server, 
+  shareSocket: null,
+  server: Server,
+  init : function() {
+    Rtc.socket = new Rtc.wsLibServer({ server:Server })
+    
+    Rtc.socket.on( 'connection', Rtc.onClientConnection )  
+  },
+  onClientConnection: function( client ) {
+    console.log( client.upgradeReq.headers.origin )
+    client.ip = client.upgradeReq.headers.origin//client.handshake.address.address
+    client.stream = null
+    
+    console.log( 'CONNECTION', client.ip )
+    Rtc.users[ client.ip ] = client
+  
+    var msg = { connection: true }
+  
+    client.send( JSON.stringify( msg ) )
+    
+    client.shareIsInitialized = false
+    
+    if( !client.shareIsInitialized ) {
+      Rtc.shareInitForClient( client )
+    }
+    
+    client.on( 'message', function( _msg ) {
+      var msg = JSON.parse( _msg )
+      
+      if( typeof msg.a !== 'undefined' ) { // ugh. only way to identify share.js msg currently.
+        msg.cmd = 'share'
+      }
+      
+      //console.log( msg, msg.cmd )
+      Rtc.handlers[ msg.cmd ]( client, msg )
+    })
+    
+    client.on( 'close', function() { // TODO: only fires when window is closed... this is a clientside problem
+      console.log("CLIENT LEAVING CHAT")
+      if( Rtc.rooms[ client.room ]  ) {
+        var idx = Rtc.rooms[ client.room ].clients.indexOf( client )
+        if( client.room ) {
+          Rtc.rooms[ client.room ].clients.splice( idx , 1 )
+          var notification = JSON.stringify( { msg:'departure', nick:client.nick } )
+          Rtc.sendToRoom( notification, client.room )
+        }
+      }
+      
+      delete Rtc.users[ client.ip ]
+      
+      if( client.stream ) {
+        client.stream.push( null )
+        client.stream.emit( 'close' )
+        console.log( 'client went away' )
+        client.close()
+        //return client.close( reason )
+      }
+    })
+  },
+  shareInitForClient: function( client ) {
+    console.log("SHARE INIT")
+    client.stream = new Duplex({ objectMode: true })
+    
+    client.stream._write = function(chunk, encoding, callback) {
+      //console.log( 's->c ', chunk )
+      client.send( JSON.stringify(chunk) )
+      return callback()
+    }
+    
+    client.stream._read = function() {}
+    
+    client.stream.headers = client.upgradeReq.headers
+    
+    client.stream.remoteAddress = client.upgradeReq.connection.remoteAddress
+    
+    share.listen( client.stream )
+    // return share.listen( stream )
+  },
   sendall : function( msg ) {
     for( var ip in Rtc.users ) {
       Rtc.users[ ip ].send( msg )
@@ -49,49 +138,11 @@ var Rtc = {
     }
     return false
   },
-  init : function() {
-    Rtc.socket = new Rtc.wsLibServer({ server:Server })
-    
-    //Rtc.io.sockets.on( 'connection', function( client ) {
-    Rtc.socket.on( 'connection', function( client ) {
-      console.log( client.upgradeReq.headers.origin )
-      client.ip = client.upgradeReq.headers.origin//client.handshake.address.address
-      console.log( 'CONNECTION', client.ip )
-      Rtc.users[ client.ip ] = client
-
-      var msg = { connection: true }
-
-      client.send( JSON.stringify( msg ) )
-
-      client.on( 'message', function( _msg ) {
-        var msg = JSON.parse( _msg )
-        
-        console.log( _msg, msg, client.TESTING )
-        Rtc.handlers[ msg.cmd ]( client, msg )
-      })
-      
-      client.TESTING = 123
-      
-      client.on( 'disconnect', function() {
-        if( Rtc.rooms[ client.room ]  ) {
-          var idx = Rtc.rooms[ client.room ].clients.indexOf( client )
-          if( client.room ) {
-            Rtc.rooms[ client.room ].clients.splice( idx , 1 )
-            var notification = JSON.stringify( { msg:'departure', nick:client.nick } )
-            Rtc.sendToRoom( notification, client.room )
-          }
-        }
-        delete Rtc.users[ client.ip ]
-      })
-    })
-
-    Rtc.rooms[ 'Gibber' ] = {
-      clients : [],
-      password: null
-    }
-    Rtc.heartbeat()    
-  },
+  
   handlers : {
+    share : function( client, msg ) {
+      client.stream.push( msg )
+    },
     register : function( client, msg ) {
       client.nick = msg.nick
       

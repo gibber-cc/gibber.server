@@ -5,7 +5,8 @@ var request         = require( 'request' ),
     fs              = require( 'fs' ),
     passport        = require( 'passport' ),
     express         = require( 'express' ),
-    sharejs         = require( 'share' ).server,
+    sharejs         = require( 'share' ),
+    shareCodeMirror = require( 'share-codemirror'),
     app             = express(),
     RedisStore      = require( 'connect-redis' )( express ),        
     server          = require( 'http' ).createServer( app ),
@@ -19,9 +20,8 @@ var request         = require( 'request' ),
     rtc             = require( './gibber_rtc.js' )( server ),
     users           = [],
     nodemailer      = require( 'nodemailer' ),
-    transporter     = nodemailer.createTransport(),
-    share           = require( './gibber_share' );
-
+    transporter     = nodemailer.createTransport();
+    
 function findById(id, fn) {
   var idx = id;
   if (users[idx]) {
@@ -163,8 +163,13 @@ app.configure( function() {
   app.use( allowCrossDomain )
   app.use( app.router )
   app.use( checkForREST )
-  
+
+  app.use( express.static( sharejs.scriptsDir ) )
+  // serve share codemirror plugin
+  app.use( express.static( shareCodeMirror.scriptsDir ) )
+    
   app.use( express.static( serverRoot/*, { maxAge:oneDay } */ ) )
+
   app.use(function(err, req, res, next){
     console.error(err.stack);
     res.send(500, 'Something broke!');
