@@ -310,9 +310,9 @@ app.get( '/loginStatus', function( req, res ) {
 })
 
 // app.post( '/test', function(req, res, next){
-//   // console.log(" TESTING  ", req.user, req.isAuthenticated() )
+//   console.log("TESTING", req.user, req.isAuthenticated() )
 //   next()
-//   //res.render( 'login_start', { user: req.user, message: req.flash('error') });
+//   res.render( 'login_start', { user: req.user, message: req.flash('error') });
 // })
 
 app.post( '/retrieve', function( req, res, next ) {
@@ -477,7 +477,7 @@ app.get( '/browser', function( req, res, next ) {
           // console.log( (JSON.parse(b)).rows )
           var _audio = [], _3d = [], _2d = [], _misc=[], demoRows = JSON.parse( b ).rows
 
-          for( var i =0; i < demoRows.length; i++ ) {
+            for( var i =0; i < demoRows.length; i++ ) {
             var cat = 'misc', row = demoRows[ i ]
             //console.log( row )
             if( row.key.split('*').length > 0 ) {
@@ -577,6 +577,10 @@ app.get( '/demos', function( req, res, next ) {
   })
 })
 
+app.post( '/deleteUserFile', function( req, res, next ) {
+  var fileInfo = req.body
+  console.log( fileInfo )
+})
 
 app.post( '/search', function( req, res, next) {
   var result = {},
