@@ -11,16 +11,17 @@ var request         = require( 'request' ),
     RedisStore      = require( 'connect-redis' )( express ),        
     server          = require( 'http' ).createServer( app ),
     util            = require( 'util' ),
-    LocalStrategy   = require( 'passport-local' ).Strategy,
-    _url            = 'http://127.0.0.1:5984/gibber',
+    LocalStrategy   = require( 'passport-local' ).Strategy,  
+    queryString     = require( 'querystring' ),
+    rtc             = require( './gibber_rtc.js' )( server ),
+    nodemailer      = require( 'nodemailer' ),
+    transporter     = nodemailer.createTransport(),
     webServerPort   =  process.argv[2] || 80, //second argument passed to command
     serverRoot      = __dirname + '/../../',
-    searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/',
-    queryString     = require('querystring'),
-    rtc             = require( './gibber_rtc.js' )( server ),
     users           = [],
-    nodemailer      = require( 'nodemailer' ),
-    transporter     = nodemailer.createTransport();
+    _url            = 'http://127.0.0.1:5984/gibber',
+    designURI       = 'http://127.0.0.1:5984/gibber/_design/gibber/',
+    searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
     
 function findById(id, fn) {
   var idx = id;
@@ -34,7 +35,7 @@ function findById(id, fn) {
 
 function findByUsername(username, fn) {
   request(
-    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/password?key="'+username+'"', json: true }, 
+    { uri:designURI + '_view/password?key="'+username+'"', json: true }, 
     function(e,r,b) {
       //console.log(b.rows)
       if(b.rows && b.rows.length === 1) {
@@ -50,7 +51,7 @@ function findByUsername(username, fn) {
 
 function findByTag( tag, fn ) {
    request(
-    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/tagged', json: true }, 
+    { uri:designURI + '_view/tagged', json: true }, 
     function(e,r,b) {
       // console.log(b.rows)
       var results = []
@@ -219,7 +220,7 @@ app.get( '/', function(req, res){
     }else if( req.query.u || req.query.user ) {
       path = req.query.u || req.query.user
       
-      request( 'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+path+'%22', function(e,r,_b) {
+      request( designURI + '_view/publications?key=%22'+path+'%22', function(e,r,_b) {
         res.render( 'instrumentBrowser', {
           user: path,
           userfiles:(JSON.parse(_b)).rows,
@@ -246,7 +247,7 @@ app.get( '/', function(req, res){
 app.get( '/tag', function( req, res ) { 
   if( req.query.tag ) {
     request(
-      { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/tagged', json: true }, 
+      { uri:designURI + '_view/tagged', json: true }, 
       function(e,r,b) {
         var results = []
         if(b.rows && b.rows.length > 0) {
@@ -264,7 +265,7 @@ app.get( '/tag', function( req, res ) {
 
 app.get( '/recent', function( req, res ) {
   request(
-    { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
+    { uri:designURI + '_view/recent?descending=true&limit=20', json: true }, 
     function(e,r,b) {
       res.send({ results: b.rows })
       // console.log(b.rows)
@@ -449,7 +450,7 @@ app.locals.inspect = require('util').inspect;
 
 app.get( '/browser', function( req, res, next ) {
   var demos = {}
-  request( 'http://127.0.0.1:5984/gibber/_design/test/_view/demos', function(e,r,b) {
+  request( designURI + '_view/demos', function(e,r,b) {
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {
@@ -466,14 +467,14 @@ app.get( '/browser', function( req, res, next ) {
     
     demos.visual = visual; demos.audio = audio; demos.audiovisual = audiovisual;
     
-    request( { uri:'http://127.0.0.1:5984/gibber/_design/test/_view/recent?descending=true&limit=20', json: true }, 
+    request( { uri:designURI + '_view/recent?descending=true&limit=20', json: true }, 
       function(__e,__r,__b) {
         var recent = []
         for( var i = 0; i < __b.rows.length; i++ ){
           //console.log( __b.rows[i].value )
           recent.push( __b.rows[i].value )
         }
-        request( 'http://127.0.0.1:5984/gibber/_design/test/_view/tutorials', function(e,r,b) {
+        request( designURI + '_view/tutorials', function(e,r,b) {
           // console.log( (JSON.parse(b)).rows )
           var _audio = [], _3d = [], _2d = [], _misc=[], demoRows = JSON.parse( b ).rows
 
@@ -496,7 +497,7 @@ app.get( '/browser', function( req, res, next ) {
           if( req.user ) {
             //console.log("USER ACCOUNT")
             request({ 
-              uri:'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', 
+              uri:designURI + '_view/publications?key=%22'+req.user.username+'%22', 
               json:true 
             },
             function(e,r,_b) {
@@ -534,7 +535,7 @@ app.get( '/browser', function( req, res, next ) {
 app.post( '/userfiles', function( req,res,next ) {
   if( req.user && req.user.username ) {
     request({ 
-      uri:'http://127.0.0.1:5984/gibber/_design/test/_view/publications?key=%22'+req.user.username+'%22', 
+      uri:designURI + '_view/publications?key=%22'+req.user.username+'%22', 
       json:true 
     },
     function(e,r,_b) {
@@ -558,7 +559,7 @@ app.get( '/chat', function( req, res, next ) {
 })
 
 app.get( '/demos', function( req, res, next ) {
-  request( 'http://127.0.0.1:5984/gibber/_design/test/_view/demos', function(e,r,b) {
+  request( designURI + '_view/demos', function(e,r,b) {
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {

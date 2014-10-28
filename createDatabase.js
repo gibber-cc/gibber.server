@@ -98,7 +98,7 @@ var makePubs = function(cb) {
 var makeDesign = function(cb) {
   
   request.put({ 
-    url: serverAddress + '/_design/test', 
+    url: serverAddress + '/_design/gibber', 
     json: {
       "views": {
         "users": {
@@ -189,7 +189,7 @@ var makeDesign = function(cb) {
 }
 
 var testDesign = function(cb) {
-  request( serverAddress + '/_design/test/_view/publications', function(e,r,b) {
+  request( serverAddress + '/_design/gibber/_view/publications', function(e,r,b) {
     console.log( "TESTING DESIGN:", b )
     if( cb ) cb()
   })
