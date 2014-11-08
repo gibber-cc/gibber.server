@@ -428,6 +428,12 @@ app.get( '/welcome', function( req, res, next ) {
   })
 })
 
+app.get( '/preferences', function( req, res, next ) {
+  res.render( 'preferences', {
+    user:req.user
+  })
+})
+
 app.get( '/documentation', function( req, res, next ) {
   res.render( 'docs', {
     user:req.user
@@ -450,7 +456,7 @@ app.locals.inspect = require('util').inspect;
 
 app.get( '/browser', function( req, res, next ) {
   var demos = {}
-  request( designURI + '_view/demos', function(e,r,b) {
+  request( designURI + '_view/demos', function(e,r,b) { 
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {
