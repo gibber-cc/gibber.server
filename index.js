@@ -16,13 +16,13 @@ var request         = require( 'request' ),
     rtc             = require( './gibber_rtc.js' )( server ),
     nodemailer      = require( 'nodemailer' ),
     transporter     = nodemailer.createTransport(),
-    webServerPort   =  process.argv[2] || 80, //second argument passed to command
-    serverRoot      = __dirname + '/../../',
+    webServerPort   = process.argv[2] || 80, //second argument passed to command
+    serverRoot      = process.argv[3] || __dirname + '/../../',
     users           = [],
     _url            = 'http://127.0.0.1:5984/gibber',
     designURI       = 'http://127.0.0.1:5984/gibber/_design/gibber/',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
-    
+
 function findById(id, fn) {
   var idx = id;
   if (users[idx]) {
@@ -151,7 +151,6 @@ app.configure( function() {
   app.set('views', serverRoot + 'snippets/')
   app.set('view engine', 'ejs')
   //app.use(express.logger())
-  
   app.use( express.cookieParser() )
   //app.use(express.methodOverride())
   app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
@@ -181,7 +180,7 @@ app.configure( function() {
   
 app.get( '/', function(req, res){
   var path
-
+  
   if( req.query ) {
     if( req.query.path || req.query.p ) {
       path = req.query.path || req.query.p
