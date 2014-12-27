@@ -136,6 +136,22 @@ var checkForREST = function( req, res, next ) {
   }
 }
 
+var checkForVersion = function( req, res, next ) {
+  var version = null,
+      search = /\/(v(\d+))/.exec( req.originalUrl )
+    
+  if( search && search.length !== 0 ) {
+    version = search[2]
+    remove = search[1]
+    
+    req.url = req.url.slice( remove.length + 1 ) // remove version string from URL
+  }
+
+  req.gibberVersion = version
+  
+  next()
+}
+
 var entityMap = { "&": "%26", "'": '%27', "/": '%2F' };
 
 function escapeString( string ) {
@@ -154,16 +170,20 @@ app.configure( function() {
   app.use( express.cookieParser() )
   //app.use(express.methodOverride())
   app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
-  //{ /*,*/ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
+  //{ /* */ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
   app.use( express.bodyParser() )
   
   app.use( passport.initialize() )
   app.use( passport.session() )
   
   app.use( allowCrossDomain )
+  
+  app.use( checkForVersion )
+  
   app.use( app.router )
+  
   app.use( checkForREST )
-
+  
   app.use( express.static( sharejs.scriptsDir ) )
   // serve share codemirror plugin
   app.use( express.static( shareCodeMirror.scriptsDir ) )
@@ -179,22 +199,22 @@ app.configure( function() {
 
   
 app.get( '/', function(req, res){
-  var path
+  var path, version = null
   
   if( req.query ) {
     if( req.query.path || req.query.p ) {
       path = req.query.path || req.query.p
-      
+      console.log("PATH = ", path )
       if( path.indexOf('/publications') === -1 ) { // shorthand to leave publications out of url
         var arr = path.split( '/' )
     
         path = arr[0] + '/publications/' + arr[1]
       }
-      
+
       request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
-          res.render( 'index', { loadFile:body, isInstrument:_body.isInstrument || 'false' } )
+          res.render( 'index', { loadFile:body, isInstrument:_body.isInstrument || 'false', gibberVersion: req.gibberVersion } )
         }else{
           res.render( 'index', { loadFile: JSON.stringify({ error:'path not found' }) })
         }
@@ -211,7 +231,7 @@ app.get( '/', function(req, res){
       request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
-          res.render( 'index', { loadFile:body, isInstrument:true } )
+          res.render( 'index', { loadFile:body, isInstrument:true, gibberVersion: req.gibberVersion } )
         }else{
           res.render( 'index', { loadFile: JSON.stringify({ error:'path not found' }) })
         }
@@ -226,7 +246,7 @@ app.get( '/', function(req, res){
         });
       })
     }else{
-      res.render( 'index', { loadFile:'null', isInstrument:'false' } )
+      res.render( 'index', { loadFile:'null', isInstrument:'false', gibberVersion: req.gibberVersion } )
     }
   }
   // fs.readFile(serverRoot + "index.htm", function (err, data) {
