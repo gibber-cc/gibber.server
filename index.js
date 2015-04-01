@@ -1,4 +1,5 @@
 // NOTE: COOKIES DON'T WORKING USING LOCALHOST, MUST USE 127.0.0.1.
+// node node_modules/gibber.server 8080 '/www/gibber.libraries/'
 var request         = require( 'request' ),
     connect         = require( 'connect' ),
     url             = require( 'url' ),
@@ -13,16 +14,16 @@ var request         = require( 'request' ),
     util            = require( 'util' ),
     LocalStrategy   = require( 'passport-local' ).Strategy,  
     queryString     = require( 'querystring' ),
-    rtc             = require( './gibber_rtc.js' )( server ),
+    rtc             = require( './gibber_rtc.js' )( server, process.argv[4] ),
     nodemailer      = require( 'nodemailer' ),
     transporter     = nodemailer.createTransport(),
-    webServerPort   =  process.argv[2] || 80, //second argument passed to command
-    serverRoot      = __dirname + '/../../',
+    webServerPort   = process.argv[2] || 80, //second argument passed to command
+    serverRoot      = process.argv[3] || __dirname + '/../../',
     users           = [],
     _url            = 'http://127.0.0.1:5984/gibber',
     designURI       = 'http://127.0.0.1:5984/gibber/_design/gibber/',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
-    
+
 function findById(id, fn) {
   var idx = id;
   if (users[idx]) {
@@ -136,6 +137,22 @@ var checkForREST = function( req, res, next ) {
   }
 }
 
+var checkForVersion = function( req, res, next ) {
+  var version = null,
+      search = /\/(v(\d+))/.exec( req.originalUrl )
+    
+  if( search && search.length !== 0 ) {
+    version = search[2]
+    remove = search[1]
+    
+    req.url = req.url.slice( remove.length + 1 ) // remove version string from URL
+  }
+
+  req.gibberVersion = version
+  
+  next()
+}
+
 var entityMap = { "&": "%26", "'": '%27', "/": '%2F' };
 
 function escapeString( string ) {
@@ -151,20 +168,23 @@ app.configure( function() {
   app.set('views', serverRoot + 'snippets/')
   app.set('view engine', 'ejs')
   //app.use(express.logger())
-  
   app.use( express.cookieParser() )
   //app.use(express.methodOverride())
   app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
-  //{ /*,*/ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
+  //{ /* */ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
   app.use( express.bodyParser() )
   
   app.use( passport.initialize() )
   app.use( passport.session() )
   
   app.use( allowCrossDomain )
+  
+  app.use( checkForVersion )
+  
   app.use( app.router )
+  
   app.use( checkForREST )
-
+  
   app.use( express.static( sharejs.scriptsDir ) )
   // serve share codemirror plugin
   app.use( express.static( shareCodeMirror.scriptsDir ) )
@@ -177,25 +197,22 @@ app.configure( function() {
   });
 })
 
-
-  
 app.get( '/', function(req, res){
-  var path
-
+  var path, version = null
+  
   if( req.query ) {
     if( req.query.path || req.query.p ) {
       path = req.query.path || req.query.p
-      
       if( path.indexOf('/publications') === -1 ) { // shorthand to leave publications out of url
         var arr = path.split( '/' )
     
         path = arr[0] + '/publications/' + arr[1]
       }
-      
+
       request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
-          res.render( 'index', { loadFile:body, isInstrument:_body.isInstrument || 'false' } )
+          res.render( 'index', { loadFile:body, isInstrument:_body.isInstrument || 'false', gibberVersion: req.gibberVersion } )
         }else{
           res.render( 'index', { loadFile: JSON.stringify({ error:'path not found' }) })
         }
@@ -212,7 +229,7 @@ app.get( '/', function(req, res){
       request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
-          res.render( 'index', { loadFile:body, isInstrument:true } )
+          res.render( 'index', { loadFile:body, isInstrument:true, gibberVersion: req.gibberVersion } )
         }else{
           res.render( 'index', { loadFile: JSON.stringify({ error:'path not found' }) })
         }
@@ -227,7 +244,7 @@ app.get( '/', function(req, res){
         });
       })
     }else{
-      res.render( 'index', { loadFile:'null', isInstrument:'false' } )
+      res.render( 'index', { loadFile:'null', isInstrument:'false', gibberVersion: req.gibberVersion } )
     }
   }
   // fs.readFile(serverRoot + "index.htm", function (err, data) {
@@ -268,9 +285,8 @@ app.get( '/recent', function( req, res ) {
     { uri:designURI + '_view/recent?descending=true&limit=20', json: true }, 
     function(e,r,b) {
       res.send({ results: b.rows })
-      // console.log(b.rows)
     }
-  ) 
+  )
 })
 
 app.get( '/account', ensureAuthenticated, function(req, res){
@@ -282,7 +298,7 @@ app.post( '/requestPassword', function(req, res){
     var data = JSON.parse( _b ),
         password = data.password,
         email = data.email
-    
+
     if( typeof email === 'undefined' || email === '' ) {
       res.send({ result:'fail', msg:'You did not specify an email account for password reminders. Please contact an administrator if you need access to this account.'})
     }else{
@@ -356,6 +372,7 @@ app.post( '/publish', function( req, res, next ) {
         _id: req.body.username + '/publications/' + req.body.name,
         name: req.body.name,
         author: req.body.username,
+        language: req.body.language,
         type: 'publication',
         publicationDate: [year, month, day, time],
         text: req.body.code,
@@ -369,11 +386,29 @@ app.post( '/publish', function( req, res, next ) {
       if( error ) {
         res.send({ error:"unable to publish; most likely you used some reserved characters such as ? & or /" }) 
       }else{
-        // console.log( "Attempted to publish", body, req.body )
+        console.log( "Attempted to publish", body, req.body )
         if( body.error ) {
           res.send({ error:'could not publish to database. ' + body.reason })
         }else{
-          res.send({ url: req.body.username + '/publications/' + req.body.name })
+          body.url = req.body.username + '/publications/' + req.body.name
+          //res.send( body )
+          var suffix = body.url.replace(/\//g, '%2F'),
+              _url = 'http://127.0.0.1:5984/gibber/' + suffix
+      
+  
+          if( _url.indexOf('%2Fpublications') === -1 ) { // shorthand to leave publications out of url
+            var arr = _url.split( '/' )
+    
+            _url = arr[0] + '%2Fpublications%2F' + arr[1]
+          }
+  
+          _url += suffix.indexOf('?') > -1 ? "&revs_info=true" : "?revs_info=true"
+  
+          request( _url, function(e,r,b) {
+            console.log( e, b )
+            
+            res.send( b )
+          })
         }
       }
     }
@@ -387,8 +422,9 @@ app.post( '/update', function( req, res, next ) {
     return
   }
   
-  var docName = req.body._id.split('/')
+  console.log(req.body)
   
+  var docName = req.body._id.split('/')
   request.put({ 
       url:'http://127.0.0.1:5984/gibber/' + req.user.username + '%2Fpublications%2F' + docName[2], // must use username explicitly for security
       json: req.body
@@ -594,7 +630,7 @@ app.post( '/search', function( req, res, next) {
       query = queryString.escape(req.body.query), filter = req.body.filter,
       url = searchURL + filter + "?q="+query
   
-  //console.log( "SEARCH REQUEST", url )
+  console.log( "SEARCH REQUEST", url )
   
   if( typeof query === 'undefined' || typeof filter === 'undefined') {
     result.error = 'Search query or search type is undefined.'

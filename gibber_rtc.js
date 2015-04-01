@@ -1,6 +1,6 @@
 // Realtime Communication module for Gibber
 
-module.exports = function( Server ) {
+module.exports = function( Server, shouldGabber ) {
   
 var Duplex = require( 'stream' ).Duplex,
     livedb = require( 'livedb' ),
@@ -8,7 +8,10 @@ var Duplex = require( 'stream' ).Duplex,
     backend = livedb.client( livedb.memory() ),
     share = sharejs.server.createClient({
       backend: backend
-    })
+    }),
+    coreAudio = require( 'node-core-audio' );
+    //AudioContext = require('web-audio-api').AudioContext,
+
 
 var Rtc = {
   rooms : { 
@@ -23,12 +26,31 @@ var Rtc = {
   socket  : null,
   shareSocket: null,
   server: Server,
+  audioContext: null,
+  audioNode: null,
+  phase: 0,
+  blockSize: 1024,
+  currentAudioTime:null,
   init : function() {
     Rtc.socket = new Rtc.wsLibServer({ server:Server })
     
-    Rtc.socket.on( 'connection', Rtc.onClientConnection )  
+    Rtc.socket.on( 'connection', Rtc.onClientConnection )
+    
+    // this.audioContext = new AudioContext()
+    // this.audioNode = this.audioContext.createScriptProcessor(this.blockSize, 2, 2, this.audioContext.sampleRate)
+    // this.audioNode.onaudioprocess = this.audioCallback.bind( this )
+    // this.audioNode.connect( this.audioContext.destination )
+    if( shouldGabber ) {
+      var engine = coreAudio.createNewAudioEngine();
+      engine.addAudioCallback( Rtc.audioCallback );
+      engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:2, inputChannels:1 })
+    }
   },
+  audioCallback: function() { Rtc.phase += 1024 },
+  
   onClientConnection: function( client ) {
+    if( Rtc.users[ client.ip ] ) return
+    
     console.log( client.upgradeReq.headers.origin )
     client.ip = client.upgradeReq.headers.origin//client.handshake.address.address
     client.stream = null
@@ -53,7 +75,8 @@ var Rtc = {
         msg.cmd = 'share'
       }
       
-      //console.log( msg, msg.cmd )
+      console.log( "MESSAGE", msg, msg.cmd )
+      
       Rtc.handlers[ msg.cmd ]( client, msg )
     })
     
@@ -80,7 +103,6 @@ var Rtc = {
     })
   },
   shareInitForClient: function( client ) {
-    console.log("SHARE INIT")
     client.stream = new Duplex({ objectMode: true })
     
     client.stream._write = function(chunk, encoding, callback) {
@@ -228,7 +250,7 @@ var Rtc = {
     message : function( client, msg ) {
       var room = Rtc.rooms[ client.room ], result = false, response = null, _msg = null
       
-      console.log("CLIENT NICK", client.nick)
+      // console.log("CLIENT NICK", client.nick)
       _msg = JSON.stringify({ msg:'incomingMessage', incomingMessage:msg.text, nick:msg.user }) 
        
       result = Rtc.sendToRoom( _msg, client.room )
@@ -240,6 +262,15 @@ var Rtc = {
       }
 
       client.send( JSON.stringify( response ) )
+    },
+    
+    // Chat.broadcast( 'code to be executed')
+    broadcast: function( client, msg ) {
+      var room = Rtc.rooms[ client.room ], result = false, response = null, _msg = null
+      
+      _msg = JSON.stringify({ msg:msg.cmd, value:msg.value, from:msg.user }) 
+       
+      result = Rtc.sendToRoom( _msg, client.room )
     },
     collaborationRequest: function( client, msg ) {
       var from = msg.from, 
@@ -338,10 +369,78 @@ var Rtc = {
             selectionRange : msg.selectionRange,
             code: msg.code,
             msg: 'remoteExecution',
-            shareName:msg.shareName
+            shareName:msg.shareName 
           }
       
       to.send( JSON.stringify( _msg ) )
+    },
+    
+    tick: function( client, msg ) {
+      var out = {
+        masterAudioTime: Rtc.currentAudioTime,
+        masterAudioPhase: Rtc.phase,
+        msg:'tock'
+      }
+      
+      //var time = process.hrtime()
+      
+      //console.log( "OUT", Rtc.phase, time[0], time[1] )
+      //setTimeout( function() {
+      client.send( JSON.stringify( out ) )
+      //}, 100 )
+    },
+    
+    'gabber.start' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg = JSON.stringify( { msg:'gabber.start' } )
+            
+      for( var i = 0; i < room.clients.length; i++ ) {
+        room.clients[ i ].send( msg )
+      }
+    },
+    
+    'gabber.Ki' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg.msg = msg.cmd             
+      for( var i = 0; i < room.clients.length; i++ ) {
+        room.clients[ i ].send( JSON.stringify( msg ) )
+      }
+    },
+    
+    'gabber.Kp' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg.msg = msg.cmd
+      for( var i = 0; i < room.clients.length; i++ ) {
+        room.clients[ i ].send( JSON.stringify( msg ) )
+      }
+    },
+    
+    gabber: function( client, msg ) {
+      // JSON.stringify({ 
+      //   gabberName:     Gabber.name,
+      //   from:           Account.nick,
+      //   selectionRange: obj.selection,
+      //   code:           obj.code,
+      //   shouldExecute:  Gabber.enableRemoteExecution,
+      //   shouldDelay:    true
+      // })
+      // form: { code: from: selectionRange: gabberName: shouldExecute: shouldDelay: }
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg.msg = 'gabber'
+      
+      msg = JSON.stringify( msg )
+      
+      //console.log("GABBER MESSAGE RECEIVED", msg, room.clients.length )
+      
+      for( var i = 0; i < room.clients.length; i++ ) {
+        if( room.clients[ i ] !== client ) {
+          room.clients[ i ].send( msg )
+        }
+      }
     },
   }
 }
