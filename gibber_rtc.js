@@ -9,7 +9,8 @@ var Duplex = require( 'stream' ).Duplex,
     share = sharejs.server.createClient({
       backend: backend
     }),
-    coreAudio = require( 'node-core-audio' );
+    coreAudio = require( 'node-core-audio' ),
+    WebSocket = require('ws');
     //AudioContext = require('web-audio-api').AudioContext,
 
 
@@ -22,7 +23,7 @@ var Rtc = {
   },
   users : {},
   usersByNick : {},
-  wsLibServer : require('ws').Server,
+  wsLibServer : WebSocket.Server,
   socket  : null,
   shareSocket: null,
   server: Server,
@@ -46,12 +47,14 @@ var Rtc = {
       engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:2, inputChannels:1 })
     }
   },
-  audioCallback: function() { Rtc.phase += 1024 },
+  audioCallback: function() { 
+    Rtc.phase += 1024
+    Rtc.sendCurrentTime()
+  },
   
   onClientConnection: function( client ) {
     if( Rtc.users[ client.ip ] ) return
     
-    console.log( client.upgradeReq.headers.origin )
     client.ip = client.upgradeReq.headers.origin//client.handshake.address.address
     client.stream = null
     
@@ -75,17 +78,18 @@ var Rtc = {
         msg.cmd = 'share'
       }
       
-      console.log( "MESSAGE", msg, msg.cmd )
+      //console.log( "MESSAGE", msg, msg.cmd )
       
       Rtc.handlers[ msg.cmd ]( client, msg )
     })
     
     client.on( 'close', function() { // TODO: only fires when window is closed... this is a clientside problem
-      console.log("CLIENT LEAVING CHAT")
       if( Rtc.rooms[ client.room ]  ) {
         var idx = Rtc.rooms[ client.room ].clients.indexOf( client )
+        console.log("FOUDN INDEX", idx)
         if( client.room ) {
           Rtc.rooms[ client.room ].clients.splice( idx , 1 )
+          console.log("REMOVED FROM ROOM")
           var notification = JSON.stringify( { msg:'departure', nick:client.nick } )
           Rtc.sendToRoom( notification, client.room )
         }
@@ -96,7 +100,6 @@ var Rtc = {
       if( client.stream ) {
         client.stream.push( null )
         client.stream.emit( 'close' )
-        console.log( 'client went away' )
         client.close()
         //return client.close( reason )
       }
@@ -151,7 +154,7 @@ var Rtc = {
         room.timestamp = Date.now()
         for( var i = 0; i < room.clients.length; i++ ){
           var client = room.clients[ i ]
-          if( client ) {
+          if( client && client.readyState === WebSocket.OPEN ) {
             client.send( msg )
           }
         }
@@ -159,6 +162,26 @@ var Rtc = {
       }
     }
     return false
+  },
+  
+  sendCurrentTime: function() {
+    var out = {
+      masterAudioTime: Rtc.currentAudioTime,
+      masterAudioPhase: Rtc.phase,
+      msg:'tock'
+    }
+
+    for( var key in Rtc.rooms ) {
+      var room = Rtc.rooms[ key ]
+      
+      if( room.clients && room.clients.length > 0 ) {
+        for( var i = 0; i < room.clients.length; i++ ) {
+          if( room.clients[i].readyState === WebSocket.OPEN ) {
+            room.clients[ i ].send( JSON.stringify( out ) )
+          }
+        }
+      }
+    }
   },
   
   handlers : {
