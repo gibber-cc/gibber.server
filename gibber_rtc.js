@@ -32,6 +32,7 @@ var Rtc = {
   phase: 0,
   blockSize: 1024,
   currentAudioTime:null,
+  FSU:false,
   init : function() {
     Rtc.socket = new Rtc.wsLibServer({ server:Server })
     
@@ -49,7 +50,13 @@ var Rtc = {
   },
   audioCallback: function() { 
     Rtc.phase += 1024
-    Rtc.sendCurrentTime()
+    if( Rtc.FSU ) {
+      if( Math.random() < .05 ) return;
+      
+      setTimeout( Rtc.sendCurrentTime, Math.floor( Math.random() * 2000 ) )
+    }else{
+      Rtc.sendCurrentTime()
+    }
   },
   
   onClientConnection: function( client ) {
@@ -86,10 +93,8 @@ var Rtc = {
     client.on( 'close', function() { // TODO: only fires when window is closed... this is a clientside problem
       if( Rtc.rooms[ client.room ]  ) {
         var idx = Rtc.rooms[ client.room ].clients.indexOf( client )
-        console.log("FOUDN INDEX", idx)
         if( client.room ) {
           Rtc.rooms[ client.room ].clients.splice( idx , 1 )
-          console.log("REMOVED FROM ROOM")
           var notification = JSON.stringify( { msg:'departure', nick:client.nick } )
           Rtc.sendToRoom( notification, client.room )
         }
@@ -419,9 +424,36 @@ var Rtc = {
       msg = JSON.stringify( { msg:'gabber.start' } )
             
       for( var i = 0; i < room.clients.length; i++ ) {
-        room.clients[ i ].send( msg )
+        var _client = room.clients[ i ]
+        //if( _client !== client ) // we want a roundtrip message for start for the client that executed the command
+        _client.send( msg )
       }
     },
+    
+    'gabber.shared' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg = JSON.stringify( { msg:'gabber.shared.' + msg.name, value:msg.value } )
+            
+      for( var i = 0; i < room.clients.length; i++ ) {
+        var _client = room.clients[ i ]
+        if( _client !== client )
+          _client.send( msg )
+      }
+    },
+    
+    'gabber.shared.add' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg = JSON.stringify( { msg:'gabber.shared.add', name:msg.name, value:msg.value } )
+      
+      for( var i = 0; i < room.clients.length; i++ ) {
+        var _client = room.clients[ i ]
+        if( _client !== client )
+          _client.send( msg )
+      }
+    },
+    
     
     'gabber.Ki' : function( client, msg ) {
       var room = Rtc.rooms[ msg.gabberName ]
@@ -433,6 +465,15 @@ var Rtc = {
     },
     
     'gabber.Kp' : function( client, msg ) {
+      var room = Rtc.rooms[ msg.gabberName ]
+      
+      msg.msg = msg.cmd
+      for( var i = 0; i < room.clients.length; i++ ) {
+        room.clients[ i ].send( JSON.stringify( msg ) )
+      }
+    },
+    
+    'gabber.KpMean' : function( client, msg ) {
       var room = Rtc.rooms[ msg.gabberName ]
       
       msg.msg = msg.cmd
