@@ -1,6 +1,6 @@
 {
   "name": "gibber.server",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "server component for Gibber",
   "main": "index.js",
   "dependencies": {
