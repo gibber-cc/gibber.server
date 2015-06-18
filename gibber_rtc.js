@@ -45,9 +45,10 @@ var Rtc = {
     if( shouldGabber ) {
       var engine = coreAudio.createNewAudioEngine();
       engine.addAudioCallback( Rtc.audioCallback );
-      engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:2, inputChannels:1 })
+      engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:1, inputChannels:1 })
     }
   },
+  fakeBuffer: [0],
   audioCallback: function() { 
     Rtc.phase += 1024
     if( Rtc.FSU ) {
@@ -57,6 +58,8 @@ var Rtc = {
     }else{
       Rtc.sendCurrentTime()
     }
+    
+    return Rtc.fakeBuffer
   },
   
   onClientConnection: function( client ) {
