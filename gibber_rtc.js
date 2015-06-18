@@ -59,7 +59,7 @@ var Rtc = {
       Rtc.sendCurrentTime()
     }
     
-    return Rtc.fakeBuffer
+    //return Rtc.fakeBuffer // causes brutal corrections?
   },
   
   onClientConnection: function( client ) {
