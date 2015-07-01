@@ -47,6 +47,8 @@ var Rtc = {
       engine.addAudioCallback( Rtc.audioCallback );
       engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:1, inputChannels:1 })
     }
+    
+    Rtc.heartbeat()
   },
   fakeBuffer: [0],
   audioCallback: function() { 
@@ -138,19 +140,17 @@ var Rtc = {
   },
   heartbeat : function() {
     var time = Date.now()
-    for( var room in Rtc.rooms ) {
-      if( room !== 'Gibber' ) {
-        !function() {
-          var _room = Rtc.rooms[ room ],
-              roomName = room
-              
-          if( time - _room.timestamp > 3000 && _room.clients.length === 0 ) {
-            console.log( 'deleting room', roomName )
-            delete Rtc.rooms[ roomName ]
-            var msg = { msg:'roomDeleted', room:roomName }
-            Rtc.sendall( JSON.stringify( msg ) )
-          }
-        }() 
+    for( var roomName in Rtc.rooms ) {
+      if( roomName !== 'Gibber' ) {
+        var room = Rtc.rooms[ roomName ]
+        
+        if( time - room.timestamp > 30000 && room.clients.length === 0 ) {
+          delete Rtc.rooms[ roomName ]
+          var msg = { msg:'roomDeleted', room:roomName }
+          Rtc.sendall( JSON.stringify( msg ) )
+        }else if( room.clients.length !== 0 ){
+          room.timestamp = time
+        }
       }
     }
     setTimeout( Rtc.heartbeat, 10000 ) 
@@ -182,10 +182,12 @@ var Rtc = {
     for( var key in Rtc.rooms ) {
       var room = Rtc.rooms[ key ]
       
-      if( room.clients && room.clients.length > 0 ) {
-        for( var i = 0; i < room.clients.length; i++ ) {
-          if( room.clients[i].readyState === WebSocket.OPEN ) {
-            room.clients[ i ].send( JSON.stringify( out ) )
+      if( room.isGabber ) {
+        if( room.clients && room.clients.length > 0 ) {
+          for( var i = 0; i < room.clients.length; i++ ) {
+            if( room.clients[i].readyState === WebSocket.OPEN ) {
+              room.clients[ i ].send( JSON.stringify( out ) )
+            }
           }
         }
       }
@@ -424,6 +426,8 @@ var Rtc = {
     'gabber.start' : function( client, msg ) {
       var room = Rtc.rooms[ msg.gabberName ]
       
+      room.isGabber = true
+      
       msg = JSON.stringify( { msg:'gabber.start' } )
             
       for( var i = 0; i < room.clients.length; i++ ) {
@@ -495,17 +499,35 @@ var Rtc = {
       //   shouldDelay:    true
       // })
       // form: { code: from: selectionRange: gabberName: shouldExecute: shouldDelay: }
-      var room = Rtc.rooms[ msg.gabberName ]
+      // could have to: 
+      
+      var room = Rtc.rooms[ msg.gabberName ], sendToAll = true
       
       msg.msg = 'gabber'
       
+      if( msg.to ) {
+        sendToAll = false
+        sendToName = msg.to
+        msg.individualTarget = true
+      }
+            
       msg = JSON.stringify( msg )
-      
+      //console.log( "CLIENT", client )
       //console.log("GABBER MESSAGE RECEIVED", msg, room.clients.length )
       
-      for( var i = 0; i < room.clients.length; i++ ) {
-        if( room.clients[ i ] !== client ) {
-          room.clients[ i ].send( msg )
+      if( sendToAll ) {
+        for( var i = 0; i < room.clients.length; i++ ) {
+          if( room.clients[ i ] !== client ) {
+            room.clients[ i ].send( msg )
+          }
+        }
+      }else{
+        for( var i = 0; i < room.clients.length; i++ ) {
+          console.log( room.clients[i].nick, sendToName )
+          if( room.clients[ i ].nick === sendToName ) {
+            console.log( "SENDING MSG" )
+            room.clients[ i ].send( msg )
+          }
         }
       }
     },
