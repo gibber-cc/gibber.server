@@ -1,7 +1,7 @@
 var request         = require( 'request' ),
-    databaseName    = 'gibber',
-    serverAddress   = 'http://localhost:5984/' + databaseName,
-    names = [ 'gibber' ], // add more names if you want to just test the database
+    databaseName    = 'gibbertest',
+    serverAddress   = 'http://admin:admin@localhost:5984/' + databaseName,
+    names = [ 'gibbertest','user1','user2','user3' ], // add more names if you want to just test the database
     lines = [
       "a = FM(); a.note(440); x = Drums('xoxo')",
       "b = Synth(); c = Seq( [440,880], 1/4, b); x = Drums('x*o*x*o')",
@@ -9,6 +9,7 @@ var request         = require( 'request' ),
       "d = Pluck({blend:.5}); d.fx.add( HPF(.4) ); e= ScaleSeq( Rndi(0,12), 1/16, d); x = Drums('xoxo')",
     ],
     pubCount = {}
+    groupCount = {}
 
 var deleteDatabase = function(cb) {
   request({ 
@@ -26,7 +27,7 @@ var makeDatabase = function(cb) {
   })
 }
 
-// by default, only one user, 'gibber', is made
+// by default, only one user, 'gibbertest', is made
 var makeUsers = function(cb) {
   for( var i = 0; i < names.length; i++ ) {
     (function() {
@@ -65,7 +66,7 @@ var makePubs = function(cb) {
   for(var i = 0; i < maxPubs; i++) {
     (function() {
       var _i = i;
-      var name = 'gibber', //names[ Math.floor( Math.random() * names.length ) ],
+      var name = 'gibbertest', //names[ Math.floor( Math.random() * names.length ) ],
           line = lines[ Math.floor( Math.random() * lines.length ) ]
       
       //console.log(name, line)
@@ -76,6 +77,10 @@ var makePubs = function(cb) {
           name: pubCount[ name ],
           author: name,
           type: 'publication',
+	  readaccess: ['user1','user2'],
+	  writeaccess: ['user1'],
+	  groupreadaccess: ['group1'],
+	  groupwriteaccess: [],
           publicationDate: [1, 12, 2013],
           text: line,
         }},
@@ -95,10 +100,44 @@ var makePubs = function(cb) {
   }
 }
 
+
+//test groups
+var makeGroups = function(cb) {
+  var maxGroups = 1
+  for(var i = 0; i < maxGroups; i++) {
+    (function() {
+      var _i = i;
+      var name = 'gibbertest'//names[ Math.floor( Math.random() * names.length ) ],
+               
+      if( typeof groupCount[ name ] === 'undefined') { groupCount[ name ] = 0 } else { groupCount[ name ]++ }
+      request.post({url:serverAddress, json:{
+          _id: name + '/groups/group' + groupCount[ name ],
+          name: groupCount[ name ],
+          owner: name,
+          type: 'group',
+	  members: ['user3'],
+        }},
+        function (error, response, body) {
+          if( error ) { 
+            console.log( error ) 
+          } else { 
+            //console.log( body ) 
+            if( _i === maxGroups - 1) {
+              console.log( "GROUPS MADE" )
+              if(cb) cb()
+            }
+          }
+        }
+      )
+    })()
+  }
+}
+
+
 var makeDesign = function(cb) {
   
   request.put({ 
-    url: serverAddress + '/_design/gibber', 
+    url: serverAddress + '/_design/gibbertest', 
     json: {
       "views": {
         "users": {
@@ -107,6 +146,42 @@ var makeDesign = function(cb) {
           }.toString(),
           "reduce": "_count"
         },
+	
+"userreadaccessfile": {
+      "map": function(doc) {  if( doc.readaccess ) {for( var i=0, l=doc.readaccess.length; i<l; i++) {emit([doc.readaccess[i],doc._id], doc );}}
+	  }.toString()
+        },
+
+"groupreadaccessfile": {
+      "map": function(doc) {  if( doc.groupreadaccess ) {for( var i=0, l=doc.groupreadaccess.length; i<l; i++) {emit([doc.groupreadaccess[i],doc._id], doc );}}
+	  }.toString()
+        },
+
+"userreadaccessall": {
+      "map": function(doc) {  if( doc.readaccess ) {for( var i=0, l=doc.readaccess.length; i<l; i++) {emit(doc.readaccess[i], doc );}}
+	  }.toString()
+        },
+
+"userwriteaccessfile": {
+      "map": function(doc) {  if( doc.writeaccess ) {for( var i=0, l=doc.writeaccess.length; i<l; i++) {emit([doc.writeaccess[i],doc._id], doc );}}
+	  }.toString()
+        },
+
+"groupwriteaccessfile": {
+      "map": function(doc) {  if( doc.groupwriteaccess ) {for( var i=0, l=doc.groupwriteaccess.length; i<l; i++) {emit([doc.groupwriteaccess[i],doc._id], doc );}}
+	  }.toString()
+        },
+
+"userwriteaccessall": {
+      "map": function(doc) {  if( doc.writeaccess ) {for( var i=0, l=doc.writeaccess.length; i<l; i++) {emit(doc.writeaccess[i], doc );}}
+	  }.toString()
+        },
+
+"usergroupsall": {
+      "map": function(doc) {  if( doc.members ) {for( var i=0, l=doc.members.length; i<l; i++) {emit(doc.members[i], doc );}}
+	  }.toString()
+        },
+
         "all": {
           "map": function(doc) {
             emit(doc._id, doc._rev)
@@ -188,22 +263,71 @@ var makeDesign = function(cb) {
   })
 }
 
-var testDesign = function(cb) {
-  request( serverAddress + '/_design/gibber/_view/publications', function(e,r,b) {
+var testDesign1 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/groupreadaccessfile?key=["group1","gibbertest/publications/pub1"]', function(e,r,b) {
     console.log( "TESTING DESIGN:", b )
     if( cb ) cb()
   })
 }
 
-var creteDatabaseUsersAndPubs = function() {
+var testDesign2 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/usergroupsall?key="user3"', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var testDesign3 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/userreadaccessfile?key=["user1","gibbertest/publications/pub1"]', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var testDesign4 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/userreadaccessall?key="user1"', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var testDesign5 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/userwriteaccessall?key="user1"', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var testDesign6 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/userwriteaccessfile?key=["user1","gibbertest/publications/pub1"]', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var testDesign7 = function(cb) {
+  request( serverAddress + '/_design/gibbertest/_view/groupwriteaccessfile?key=["group1","gibbertest/publications/pub1"]', function(e,r,b) {
+    console.log( "TESTING DESIGN:", b )
+    if( cb ) cb()
+  })
+}
+
+var createDatabaseUsersAndPubs = function() {
   var next = 0,
       functions = [
         deleteDatabase,
         makeDatabase,
         makeUsers,
         makePubs,
+	makeGroups,
         makeDesign,
-        testDesign
+        testDesign1,
+	testDesign2,
+	testDesign3,
+	testDesign4,
+	testDesign5,
+	testDesign6,
+	testDesign7
       ]
       
   cb = function() {
@@ -215,4 +339,4 @@ var creteDatabaseUsersAndPubs = function() {
   cb()
 }
 
-creteDatabaseUsersAndPubs()
+createDatabaseUsersAndPubs()
