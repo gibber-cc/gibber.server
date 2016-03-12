@@ -67,6 +67,12 @@ var isempty = true;
 q.concurrency = 1;
 q.timeout = 3000; 
 
+q.on('success', function(result, job) {
+  if(q.length == 0)
+  	isempty = true;
+  console.log('job finished processing:', job.toString().replace(/\n/g, ''));
+});
+
 
 q.on("timeout", function(next, job)
 		{
@@ -81,8 +87,9 @@ function ensurequeue()
 {
 	if(isempty)
 	{
-		isempty = !isempty;
+		isempty = false;
 		q.start(function(err) {/*console.log('all done:');*/});
+		console.log("triggering ensurequeue");
 	}
 }
 
@@ -122,7 +129,9 @@ function User_Destroy(username,cb)
  */
 function User_CheckInfo(username,cb)
 {
+	console.log("triggering queuepush of user_checkinfo");
 	q.push(function(queuecb){couch_module.user.checkinfo(username,(err,response) => {cb(err,response); queuecb();});});
+	console.log(q.length);
 	ensurequeue();
 }
 

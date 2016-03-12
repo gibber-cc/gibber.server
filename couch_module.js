@@ -73,6 +73,7 @@ function User_Create(username,password,date,cb)
 
 function User_CheckInfo(username,cb)
 {
+	console.log("user checkinfo is triggering");
 	var result = {};
 	blah.get(username, { revs_info: true }, function(err, body) {
 	if(!err)

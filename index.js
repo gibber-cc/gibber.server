@@ -37,17 +37,20 @@ function findById(id, fn) {
 
 function findByUsername(username, fn)
 {
+	console.log("searching for "+username);
 	queuehandler.user.checkinfo(username, 
 	function(err,response) 
 	{
 		if(response && !err)
 		{
+			console.log("user has been found");
 			var user = { username:response._id, password: response.password, id:users.length } // MUST GIVE A USER ID FOR SESSION MAINTENANCE
 			users.push( user )
 			return fn( null, user );
 		}
 		else
 		{
+			console.log("user has not been found");
 			return fn( null, null );
 		}
     	});
@@ -95,9 +98,6 @@ passport.deserializeUser(function(id, done) {
 //   however, in this example we are using a baked-in set of users.
 passport.use(new LocalStrategy(
   function(username, password, done) {
-    // asynchronous verification, for effect...
-    process.nextTick(function () {
-      
       // Find the user by username.  If there is no user with the given
       // username, or the password is not correct, set the user to `false` to
       // indicate failure and set a flash message.  Otherwise, return the
@@ -113,7 +113,6 @@ passport.use(new LocalStrategy(
         }
         return done(null, user);
       })
-    });
   }
 ));
 
