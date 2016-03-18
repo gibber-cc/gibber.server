@@ -1,7 +1,8 @@
 // Realtime Communication module for Gibber
 
 module.exports = function( Server, shouldGabber ) {
-  
+console.log(shouldGabber);
+shouldGabber = false;
 var Duplex = require( 'stream' ).Duplex,
     livedb = require( 'livedb' ),
     sharejs = require( 'share' ),
@@ -9,7 +10,7 @@ var Duplex = require( 'stream' ).Duplex,
     share = sharejs.server.createClient({
       backend: backend
     }),
-    coreAudio = require( 'node-core-audio' ),
+    coreAudio = /*shouldGabber?require( 'node-core-audio' ):*/null,
     WebSocket = require('ws');
     //AudioContext = require('web-audio-api').AudioContext,
 

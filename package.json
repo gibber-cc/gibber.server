@@ -16,8 +16,7 @@
     "share-codemirror": "0.0.5",
     "livedb": "~0.4.8",
     "querystring": "~0.2.0",
-    "ws": "~0.4.32",
-    "node-core-audio": "0.4.1"
+    "ws": "~0.4.32"
   },
   "devDependencies": {},
   "scripts": {

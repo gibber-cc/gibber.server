@@ -21,7 +21,7 @@ var request         = require( 'request' ),
     serverRoot      = process.argv[3] || __dirname + '/../../',
     users           = [],
     _url            = 'http://127.0.0.1:5984/gibber',
-    designURI       = 'http://127.0.0.1:5984/gibbertest/_design/gibbertest/',
+    designURI       = 'http://127.0.0.1:5984/gibber/_design/gibber/',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
 
 function findById(id, fn) {
@@ -42,7 +42,6 @@ function findByUsername(username, fn) {
       if(b.rows && b.rows.length === 1) {
         var user = { username:b.rows[ 0 ].key, password: b.rows[ 0 ].value, id:users.length } // MUST GIVE A USER ID FOR SESSION MAINTENANCE
         users.push( user )
-	console.log(user);
         return fn( null, user );
       }else{
         return fn( null, null );
@@ -364,13 +363,8 @@ app.post( '/publish', function( req, res, next ) {
       month = date.getMonth() + 1,
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
-  console.log("going to try publishing a file");
-  console.log(req.user);
-  console.log(users);
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
+  
+  //console.log( "USERNAME", req.body.username )
   
   request.post({ 
       url:'http://127.0.0.1:5984/gibber/', 
