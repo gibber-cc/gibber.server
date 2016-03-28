@@ -7,6 +7,7 @@ var request         = require( 'request' ),
     passport        = require( 'passport' ),
     express         = require( 'express' ),
     sharejs         = require( 'share' ),
+    queuehandler    = require("./queuehandler.js"),
     shareCodeMirror = require( 'share-codemirror'),
     app             = express(),
     RedisStore      = require( 'connect-redis' )( express ),        
@@ -14,43 +15,53 @@ var request         = require( 'request' ),
     util            = require( 'util' ),
     LocalStrategy   = require( 'passport-local' ).Strategy,  
     queryString     = require( 'querystring' ),
-    rtc             = require( './gibber_rtc.js' )( server, process.argv[4] ),
+    //rtc             = require( './gibber_rtc.js' )( server, process.argv[4] ),
     nodemailer      = require( 'nodemailer' ),
     transporter     = nodemailer.createTransport(),
     webServerPort   = process.argv[2] || 80, //second argument passed to command
     serverRoot      = process.argv[3] || __dirname + '/../../',
     users           = [],
-    _url            = 'http://127.0.0.1:5984/gibber',
+    _url            = 'http://127.0.0.1:5984/gibbertest',
     designURI       = 'http://127.0.0.1:5984/gibbertest/_design/gibbertest/',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
 
 function findById(id, fn) {
   var idx = id;
-  if (users[idx]) {
+  if (users[idx]) 
+  {
+    //console.log("deserialize returning not null")
     fn(null, users[idx]);
-  } else {
+  }
+  else {
     fn( null, null )
-    //fn(new Error('User ' + id + ' does not exist'));
+    //console.log("deserialize returning null")
   }
 }
 
-function findByUsername(username, fn) {
-  request(
-    { uri:designURI + '_view/password?key="'+username+'"', json: true }, 
-    function(e,r,b) {
-      //console.log(b.rows)
-      if(b.rows && b.rows.length === 1) {
-        var user = { username:b.rows[ 0 ].key, password: b.rows[ 0 ].value, id:users.length } // MUST GIVE A USER ID FOR SESSION MAINTENANCE
-        users.push( user )
-	console.log(user);
-        return fn( null, user );
-      }else{
-        return fn( null, null );
-      }
-    }
-  )
+function findByUsername(username, fn)
+{
+	//console.log("searching for "+username);
+	queuehandler.user.checkinfo(username, 
+	function(err,response) 
+	{
+		if(response && !err)
+		{
+			//console.log("user has been found");
+			var user = { username:response._id, password: response.password, id:users.length } // MUST GIVE A USER ID FOR SESSION MAINTENANCE
+			//console.log(user);
+			users.push( user )
+			//console.log(users);
+			return fn( null, user );
+		}
+		else
+		{
+			//console.log("user has not been found");
+			return fn( null, null );
+		}
+    	});
 }
 
+/*TODO add tag functionality to couch_module (added to file_publish) then come back and stare at this*/
 function findByTag( tag, fn ) {
    request(
     { uri:designURI + '_view/tagged', json: true }, 
@@ -75,10 +86,12 @@ function findByTag( tag, fn ) {
 //   this will be as simple as storing the user ID when serializing, and finding
 //   the user by ID when deserializing.
 passport.serializeUser( function(user, done) { 
+ // console.log("serializing");
   done(null, user.id); 
 });
 
 passport.deserializeUser(function(id, done) {
+  //console.log("deserializing atempt");
   findById(id, function (err, user) { 
     done(err, user); 
   });
@@ -92,15 +105,12 @@ passport.deserializeUser(function(id, done) {
 //   however, in this example we are using a baked-in set of users.
 passport.use(new LocalStrategy(
   function(username, password, done) {
-    // asynchronous verification, for effect...
-    process.nextTick(function () {
-      
       // Find the user by username.  If there is no user with the given
       // username, or the password is not correct, set the user to `false` to
       // indicate failure and set a flash message.  Otherwise, return the
       // authenticated `user`.
       findByUsername(username, function(err, user) {
-        console.log( user, username, password )
+        //console.log( user, username, password )
         if (err) { return done(err); }
         if (!user) { 
           return done(null, false, { message: 'Unknown user ' + username }); 
@@ -110,7 +120,6 @@ passport.use(new LocalStrategy(
         }
         return done(null, user);
       })
-    });
   }
 ));
 
@@ -171,7 +180,7 @@ app.configure( function() {
   //app.use(express.logger())
   app.use( express.cookieParser() )
   //app.use(express.methodOverride())
-  app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
+  app.use( express.session({ secret:'gibber gibberish gibbering'}) )
   //{ /* */ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
   app.use( express.bodyParser() )
   
@@ -260,6 +269,230 @@ app.get( '/', function(req, res){
 
   //   res.end( data )
   // })
+})
+
+app.post( '/userreadaccessall', function( req, res ) {
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	request({ uri:designURI + '_view/userreadaccessall', json: true }, function(e,r,b) 
+	{
+		var results = []
+		if(b.rows && b.rows.length > 0) 
+		{
+			for( var i = 0; i < b.rows.length; i++ ) 
+			{
+				var row = b.rows[ i ];
+				if( row.key.indexOf( req.user.username ) > -1 ) 
+					results.push( row.value )
+			}
+		}
+        	res.send({ results: results })
+	});
+})
+
+app.post( '/userwriteaccessall', function( req, res ) {
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	request({ uri:designURI + '_view/userwriteaccessall', json: true }, function(e,r,b) 
+	{
+		var results = [];
+		if(b.rows && b.rows.length > 0) 
+		{
+			for( var i = 0; i < b.rows.length; i++ )
+			{
+				var row = b.rows[ i ];
+				if( row.key.indexOf( req.user.username ) > -1 )
+					results.push( row.value )
+			}
+		}
+		res.send({ results: results })
+      });
+})
+
+app.post( '/userreadaccessfile', function( req, res ) {
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	request({ uri:designURI + '_view/userreadaccessfile', json: true }, function(e,r,b)
+	{
+		var results = []
+		if(b.rows && b.rows.length > 0)
+		{
+			for( var i = 0; i < b.rows.length; i++ )
+			{
+				var row = b.rows[ i ];
+				if(( row.key[0] == req.user.username)&&(row.key[1] == req.body.filename))
+					results.push( row.value )
+			}
+		}
+		res.send({ results: results })
+	});
+})
+
+app.post( '/userwriteaccessfile', function( req, res ) {
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	request({ uri:designURI + '_view/userwriteaccessfile', json: true }, function(e,r,b) 
+	{
+		var results = []
+		if(b.rows && b.rows.length > 0)
+		{
+			for( var i = 0; i < b.rows.length; i++ )
+			{
+				var row = b.rows[ i ]
+				if(( row.key[0] == req.user.username)&&(row.key[1] == req.body.filename))
+					results.push( row.value );
+			}
+		}
+		res.send({ results: results })
+	});
+})
+
+//add authentication to check if currently logged on user is part of group *TODO FIX THESE FUNCTIONS AND STUFF
+app.post( '/groupreadaccessfile', function( req, res ) { 
+    request(
+      { uri:designURI + '_view/groupreadaccessfile', json: true }, 
+      function(e,r,b) {
+        var results = []
+        if(b.rows && b.rows.length > 0) {
+          for( var i = 0; i < b.rows.length; i++ ) {
+            var row = b.rows[ i ]
+
+            if( row.value.indexOf( [req.body.groupname,req.body.filename] ) > -1 ) results.push( row.key )
+          }
+        }
+        res.send({ results: results })
+      }
+    )
+})
+
+app.post( '/groupwriteaccessfile', function( req, res ) { 
+    request(
+      { uri:designURI + '_view/groupwriteaccessfile', json: true }, 
+      function(e,r,b) {
+        var results = []
+        if(b.rows && b.rows.length > 0) {
+          for( var i = 0; i < b.rows.length; i++ ) {
+            var row = b.rows[ i ]
+            if( row.value.indexOf( [req.body.groupname,req.body.filename] ) > -1 ) results.push( row.key )
+          }
+        }
+        res.send({ results: results })
+      }
+    )
+})
+
+app.post('/fileaddreadaccess', function(req, res){
+	console.log("fileaddreadaccess");
+	if(!(req.isAuthenticated()))
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.addreadaccess(req.body.filename,req.body.newuser,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
+})
+
+app.post('fileremreadaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.remreadaccess(req.body.filename,req.body.newuser,function(err, response)
+	{
+	res.send({ response: response });
+	});
+	
+})
+
+app.post('fileaddwriteaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.addwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+	{
+	res.send({ response: response });
+	});
+	
+})
+
+app.post('fileremwriteaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.remwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+	{
+	res.send({ response: response });
+	});
+	
+})
+
+app.post('fileaddgroupreadaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.addgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
+	{
+	res.send({ response: response });
+	});
+})
+
+app.post('fileremgroupreadaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.remgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
+	{
+	res.send({ response: response });
+	});
+})
+
+app.post('fileaddgroupwriteaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.addgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+	{
+	res.send({ response: response });
+	});
+})
+
+app.post('fileremgroupwriteaccess', function(req, res){
+  if( typeof req.user === 'undefined' ) {
+    res.send({ error:'you are not currently logged in.' })
+    return
+  }
+	queuehandler.file.remgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+	{
+	res.send({ response: response });
+	});
 })
 
 app.get( '/tag', function( req, res ) { 
@@ -359,106 +592,53 @@ app.get( '/create_publication', function( req, res, next ) {
 })
 
 app.post( '/publish', function( req, res, next ) {
+if( !(req.isAuthenticated()) ) {
+    res.send({ error:'you are not currently logged in.' })
+	}
   var date = new Date(),
       day  = date.getDate(),
       month = date.getMonth() + 1,
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
-  console.log("going to try publishing a file");
-  console.log(req.user);
-  console.log(users);
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-  
-  request.post({ 
-      url:'http://127.0.0.1:5984/gibber/', 
-      json:{
-        _id: req.body.username + '/publications/' + req.body.name,
-        name: req.body.name,
-        author: req.body.username,
-        language: req.body.language,
-        type: 'publication',
-        publicationDate: [year, month, day, time],
-        text: req.body.code,
-        tags: req.body.tags,
-        permissions : req.body.permissions,
-        isInstrument: false, //req.body.instrument,
-        notes: req.body.notes
-      }
-    },
-    function ( error, response, body ) {
-      if( error ) {
-        res.send({ error:"unable to publish; most likely you used some reserved characters such as ? & or /" }) 
-      }else{
-        console.log( "Attempted to publish", body, req.body )
-        if( body.error ) {
-          res.send({ error:'could not publish to database. ' + body.reason })
-        }else{
-          body.url = req.body.username + '/publications/' + req.body.name
-          //res.send( body )
-          var suffix = body.url.replace(/\//g, '%2F'),
-              _url = 'http://127.0.0.1:5984/gibber/' + suffix
-      
-  
-          if( _url.indexOf('%2Fpublications') === -1 ) { // shorthand to leave publications out of url
-            var arr = _url.split( '/' )
-    
-            _url = arr[0] + '%2Fpublications%2F' + arr[1]
-          }
-  
-          _url += suffix.indexOf('?') > -1 ? "&revs_info=true" : "?revs_info=true"
-  
-          request( _url, function(e,r,b) {
-            console.log( e, b )
-            
-            res.send( b )
-          })
-        }
-      }
-    }
-  )
+	
+	queuehandler.file.publish(req.user.username,req.body.filename,req.body.code,[year,month,day,time],req.body.language,req.body.tags,req.body.notes,
+	function(err,response)
+	{
+		if(err)
+			res.send({error:"unable to publish file."}); //TODO: detailed error messages
+		else
+			res.send({msg:"successfully published file."}); //TODO: respond properly when file successfully published
+	}
+	);
 })
 
+//review this fn.
 app.post( '/update', function( req, res, next ) {
-  //console.log( req.body._rev, req.body._id )
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-  
-  console.log(req.body)
-  
-  var docName = req.body._id.split('/')
-  request.put({ 
-      url:'http://127.0.0.1:5984/gibber/' + req.user.username + '%2Fpublications%2F' + docName[2], // must use username explicitly for security
-      json: req.body
-    },
-    function ( error, response, body ) {
-      if( error ) {
-        res.send({ error:"unable to publish; most likely you used some reserved characters such as ? & or /" }) 
-      }else{
-        // console.log( "Attempted to publish", body, req.body )
-        if( body.error ) {
-          console.log( 'fail', body.reason )
-          res.send({ error:'could not publish to database. ' + body.reason })
-        }else{
-          res.send({ _rev: body.rev })
-        }
-      }
-    }
-  )
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.file.edit(req.body.filename,req.body.newtext,function(err,response)
+	{
+		if(err)
+			res.send({error:"unable to update file."});
+		else
+			res.send({msg:"successfully updated file."});
+	}
+	);
 })
 
 app.post( '/createNewUser', function( req, res, next ) { 
-  request.post({url:'http://127.0.0.1:5984/gibber/', json:req.body},
-    function (error, response, body) {
+  var date = new Date(),
+      day  = date.getDate(),
+      month = date.getMonth() + 1,
+      year = date.getFullYear(),
+      time = date.toLocaleTimeString()
+  queuehandler.user.create(req.body.username, req.body.password, [year,month,day,time],
+    function (error, response) {
       if( error ) { 
         console.log( error )
         res.send({ msg: 'The server was unable to create your account' }) 
       } else { 
-        res.send({ msg:'User account ' + req.body._id + ' created' })
+        res.send({ msg:'User account created' })
       }
     }
   )
@@ -744,6 +924,7 @@ app.get('/logout', function(req, res, next){
   if( req.user ) {
     req.logout();
     res.send({ msg:'logout complete' })
+	console.log(users);
   }else{
     //console.log( "There wasn't any user... " )
     res.send({ msg:'you aren\t logged in... how did you even try to logout?' })
@@ -764,4 +945,4 @@ function ensureAuthenticated(req, res, next) {
 
 nodemailer.sendmail = true
 server.listen( webServerPort )
-rtc.init()
+//rtc.init()

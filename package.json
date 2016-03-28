@@ -16,9 +16,12 @@
     "share-codemirror": "0.0.5",
     "livedb": "~0.4.8",
     "querystring": "~0.2.0",
-    "ws": "~0.4.32"
+    "ws": "~0.4.32",
+    "node-core-audio": "0.4.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^2.4.5"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

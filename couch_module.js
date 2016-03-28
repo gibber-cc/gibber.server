@@ -73,7 +73,7 @@ function User_Create(username,password,date,cb)
 
 function User_CheckInfo(username,cb)
 {
-	console.log("user checkinfo is triggering");
+	//console.log("user checkinfo is triggering");
 	var result = {};
 	blah.get(username, { revs_info: true }, function(err, body) {
 	if(!err)
@@ -359,18 +359,21 @@ function File_AddReadAccess(filename,newuser,cb)
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
 	{	
+		console.log("i'm here");
 		newfile = body;
 		if (newfile.readaccess.indexOf(newuser) == -1)
 			newfile.readaccess.push(newuser);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
 		{
+			console.log("setting result to true");
 			result = true;
 			cb(err2,result);
 		}
 		});
 	}
-	cb(err1,result);
+	if(result!=true)
+		cb(err1,result);
 	});
 }
 

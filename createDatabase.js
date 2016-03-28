@@ -190,7 +190,8 @@ var makeDesign = function(cb) {
         "publications": {
           "map": function(doc) {
             if (doc.type === 'publication') {
-              emit(doc.author, {
+              emit(doc._id, {
+		author: doc.author,
                 text: doc.text,
                 notes: doc.notes,
                 tags: doc.tags
