@@ -274,9 +274,9 @@ function File_Edit(filename,newtext,cb)
  * @param {string} newnotes - The new notes of the file.
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
-function File_SetMetadata(filename,newlanguage,newtags,newnotes,cb)
+function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,cb)
 {
-	q.push(function(queuecb){couch_module.file.setmetadata(filename,newlanguage,newtags,newnotes,(err,response) => {cb(err,response); queuecb();});});
+	q.push(function(queuecb){couch_module.file.setmetadata(filename,newlanguage,newtags,newnotes,ispublic,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

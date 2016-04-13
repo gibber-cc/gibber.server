@@ -390,7 +390,6 @@ app.post( '/groupwriteaccessfile', function( req, res ) {
 })
 
 app.post('/fileaddreadaccess', function(req, res){
-	console.log("fileaddreadaccess");
 	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
@@ -415,85 +414,182 @@ app.post('/fileaddreadaccess', function(req, res){
 	);
 })
 
-app.post('fileremreadaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.remreadaccess(req.body.filename,req.body.newuser,function(err, response)
+app.post('/fileremreadaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
-	
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.remreadaccess(req.body.filename,req.body.newuser,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileaddwriteaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.addwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+app.post('/fileaddwriteaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
-	
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.addwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileremwriteaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.remwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+app.post('/fileremwriteaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
-	
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.remwriteaccess(req.body.filename,req.body.newuser,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileaddgroupreadaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.addgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
+app.post('/fileaddgroupreadaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.addgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileremgroupreadaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.remgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
+app.post('/fileremgroupreadaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.remgroupreadaccess(req.body.filename,req.body.group,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileaddgroupwriteaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.addgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+app.post('/fileaddgroupwriteaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.addgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
 
-app.post('fileremgroupwriteaccess', function(req, res){
-  if( typeof req.user === 'undefined' ) {
-    res.send({ error:'you are not currently logged in.' })
-    return
-  }
-	queuehandler.file.remgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+app.post('/fileremgroupwriteaccess', function(req, res){
+	if(!(req.isAuthenticated()))
 	{
-	res.send({ response: response });
-	});
+		res.send({ error:'you are not currently logged in.' })
+	}
+	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
+	{
+		b = JSON.parse(b);
+		console.log(b["total_rows"]);
+		if(b.rows[0].value.author == req.user.username)
+		{
+			console.log("user authenticated to modify permissions.");
+			queuehandler.file.remgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+			{
+				if(!err)
+					res.send({ response: response });
+				else
+					res.send({err: err});
+			});
+		}
+	}
+	);
 })
+
+
 
 app.get( '/tag', function( req, res ) { 
   if( req.query.tag ) {
@@ -612,18 +708,70 @@ if( !(req.isAuthenticated()) ) {
 	);
 })
 
+app.post( '/filesetmetadata', function( req, res, next ) {
+if( !(req.isAuthenticated()) ) {
+    res.send({ error:'you are not currently logged in.' })
+	}
+	queuehandler.user.authorizewrite(req.user.username,req.body.filename,function(err1,response1)
+	{
+		queuehandler.file.setmetadata(req.body.filename,req.body.newlanguage,req.body.newtags,req.body.newnotes,req.body.ispublic,function(err,response)
+		{
+			if(err)
+				res.send({error:"unable to edit file metadata."});
+			else
+				res.send({msg:"successfully edited file metadata."});
+		}
+		);
+	});
+})
+
 //review this fn.
 app.post( '/update', function( req, res, next ) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.file.edit(req.body.filename,req.body.newtext,function(err,response)
+	queuehandler.user.authorizewrite(req.user.username,req.body.filename,function(err1,response1)
 	{
-		if(err)
-			res.send({error:"unable to update file."});
+		if(response1 == true)
+			queuehandler.file.edit(req.body.filename,req.body.newtext,function(err2,response2)
+			{
+				if(err2)
+					res.send({error:"Unable to update file."});
+				else
+					res.send({msg:"Successfully updated file."});
+			});
 		else
-			res.send({msg:"successfully updated file."});
-	}
-	);
+			res.send({error:"User authorization failed. You are not permitted to update this file."});
+	});
+})
+
+app.post('/userreadfile', function (req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'You are not currently logged in.' })
+	queuehandler.user.authorizeread(req.user.username,req.body.filename,function(err1,response1)
+	{
+		if(response1 == true)
+		{
+			//retrieve file to read
+			console.log("beginning file retrieval");
+			request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
+			{
+				//b = JSON.parse(b);
+				var results = [];
+				console.log(b.rows);
+				if(b.rows && b.rows.length > 0) 
+				{
+					for(i=0;i<b.rows.length;i++)
+					{
+						if(b.rows[i].id == req.body.filename)
+							results = b.rows[i];
+					}
+				}
+				res.send({ results: results })
+			});
+		}
+		else
+			res.send({error:"User authorization failed. You are not permitted to read this file."});
+	});
 })
 
 app.post( '/createNewUser', function( req, res, next ) { 
@@ -642,6 +790,93 @@ app.post( '/createNewUser', function( req, res, next ) {
       }
     }
   )
+})
+
+app.post('/groupcreate', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.create(req.body.newgroup,req.user.username,function(err, response)
+	{
+		if(err)
+			res.send({error:"unable to create group."});
+		else
+			res.send({msg:"successfully created group."});
+	});
+})
+
+app.post('/groupadduser', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	{
+		if(err1)
+			res.send({error:"you are not authorized to add users."});
+		else
+		{
+			queuehandler.group.adduser(req.body.groupname,req.body.newuser,function(err2, response2)
+			{
+				if(err2)
+				{
+					res.send({error:"unable to add user to group."});
+					console.log(response2);
+				}
+				else
+					res.send({msg:"successfully added user to group."});
+			});
+		}
+		
+	});
+	
+})
+
+app.post('/groupremoveuser', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	{
+		if(err1)
+			res.send({error:"you are not authorized to remove users."});
+		else
+		{
+			queuehandler.group.removeuser(req.body.groupname,req.body.remuser,function(err2, response2)
+			{
+				if(err2)
+				{
+					res.send({error:"unable to remove user from group."});
+					console.log(response2);
+				}
+				else
+					res.send({msg:"successfully removed user from group."});
+			});
+		}
+		
+	});
+	
+})
+
+app.post('/groupdestroy', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	{
+		if(err1)
+			res.send({error:"you are not authorized to destroy this group."});
+		else
+		{
+			queuehandler.group.destroy(req.body.groupname,function(err2, response2)
+			{
+				if(err2)
+				{
+					res.send({error:"unable to destroy group."});
+					console.log(response2);
+				}
+				else
+					res.send({msg:"successfully destroyed group."});
+			});
+		}
+		
+	});
+	
 })
 
 app.get( '/welcome', function( req, res, next ) {

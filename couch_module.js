@@ -147,37 +147,43 @@ function User_AuthorizeRead(username,filename,cb)
 	//var user_grouplist = [];
 	var filebody = null;
 	blah.get(username, { revs_info: true }, function(err1, body1) {
-	if (!err1)
+	if (!err1 && filename!=undefined)
 	{	
 		var user_grouplist = body1.grouplist;
 		blah.get(filename, { revs_info: true }, function(err2, body2) {
 		if(!err2)
 		{
-			if(body2.readaccess.indexOf(username)!=-1)
-			{
+			if(body2.isPublic == true)
 				verified = true;
-				console.log("verified has been set to true");
-			}
 			else
 			{
-				console.log(body1);
-				for(i=0;i<body1.grouplist.length;i++)
+				if(body2.readaccess.indexOf(username)!=-1)
 				{
-					if(body2.groupreadaccess.indexOf(user_grouplist[i])!=-1)
+					verified = true;
+					console.log("verified has been set to true");
+				}
+				else
+				{
+					console.log(body1);
+					for(i=0;i<body1.grouplist.length;i++)
 					{
-						verified = true;
-						console.log("verified has been set to true");
+						if(body2.groupreadaccess.indexOf(user_grouplist[i])!=-1)
+						{
+							verified = true;
+							console.log("verified has been set to true");
+						}
 					}
 				}
 			}
 		}
 		cb(err1,verified);
 		console.log("the verified status for authorizeRead is "+verified);
-		});
-		
+		});	
 	}
 	else
 	{
+		if(!err1)
+			err1 = "filename undefined";
 		cb(err1,verified);
 	}
 	});
@@ -189,7 +195,7 @@ function User_AuthorizeWrite(username,filename,cb)
 	//var user_grouplist = [];
 	var filebody = null;
 	blah.get(username, { revs_info: true }, function(err1, body1) {
-	if (!err1)
+	if (!err1 && filename!=undefined)
 	{	
 		var user_grouplist = body1.grouplist;
 		blah.get(filename, { revs_info: true }, function(err2, body2) {
@@ -226,7 +232,8 @@ function User_AuthorizeWrite(username,filename,cb)
 	}
 	else
 	{
-		console.log("err1"+err1);
+		if(!err1)
+			err1 = "filename undefined";
 		cb(err1,verified);
 	}
 	});
@@ -305,7 +312,7 @@ function File_Edit(filename,newtext,cb)
 	});
 }
 
-function File_SetMetadata(filename,newlanguage,newtags,newnotes,cb)
+function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,cb)
 {
 	var result = false;
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
@@ -314,9 +321,14 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,cb)
 	{	
 		//TODO: check for null and set defaults so all arguments don't have to be populated
 		newfile = body;
-		newfile.language = newlanguage;
-		newfile.notes = newnotes;
-		newfile.tags = newfile.tags.concat(newtags);
+		if(newlanguage!=undefined) 
+			newfile.language = newlanguage;
+		if(newnotes!=undefined)
+			newfile.notes = newnotes;
+		if(newtags!=undefined)
+			newfile.tags = newfile.tags.concat(newtags);
+		if(ispublic!=undefined)
+			newfile.isPublic = ispublic;
 		var date = new Date(),day  = date.getDate(),month = date.getMonth() + 1,year = date.getFullYear(),time = date.toLocaleTimeString();
 		newfile.lastModified = [year,month,day,time];
 		blah.insert(newfile, filename, function(err2, body) {
@@ -359,20 +371,16 @@ function File_AddReadAccess(filename,newuser,cb)
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
 	{	
-		console.log("i'm here");
 		newfile = body;
 		if (newfile.readaccess.indexOf(newuser) == -1)
 			newfile.readaccess.push(newuser);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
-		{
-			console.log("setting result to true");
 			result = true;
-			cb(err2,result);
-		}
+		cb(err2,result);
 		});
 	}
-	if(result!=true)
+	else
 		cb(err1,result);
 	});
 }
@@ -390,13 +398,12 @@ function File_RemReadAccess(filename,remuser,cb)
 			newfile.readaccess.splice(i, 1);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
-		{
 			result = true;
-			cb(err2,result);
-		}
+		cb(err2,result);
 		});
 	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -410,15 +417,14 @@ function File_AddWriteAccess(filename,newuser,cb)
 		newfile = body;
 		if (newfile.writeaccess.indexOf(newuser) == -1)
 			newfile.writeaccess.push(newuser);
-	blah.insert(newfile, filename, function(err2, body) {
-	if (!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if (!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -433,15 +439,14 @@ function File_RemWriteAccess(filename,remuser,cb)
 		var i = newfile.writeaccess.indexOf(remuser);
 		if(i != -1) 
 			newfile.writeaccess.splice(i, 1);
-	blah.insert(newfile, filename, function(err2, body) {
-	if (!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if (!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -451,19 +456,18 @@ function File_AddGroupReadAccess(filename,newgroup,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		if (newfile.groupreadaccess.indexOf(newgroup) == -1)
 			newfile.groupreadaccess.push(newgroup);
-	blah.insert(newfile, filename, function(err2, body) {
-	if (!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if (!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -478,15 +482,14 @@ function File_RemGroupReadAccess(filename,remgroup,cb)
 		var i = newfile.groupreadaccess.indexOf(remgroup);
 		if(i != -1) 
 			newfile.groupreadaccess.splice(i, 1);
-	blah.insert(newfile, filename, function(err2, body) {
-	if(!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if(!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -500,15 +503,14 @@ function File_AddGroupWriteAccess(filename,newgroup,cb)
 		newfile = body;
 		if (newfile.groupwriteaccess.indexOf(newgroup) == -1)
 			newfile.groupwriteaccess.push(newgroup);
-	blah.insert(newfile, filename, function(err2, body) {
-	if(!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if(!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -523,15 +525,14 @@ function File_RemGroupWriteAccess(filename,remgroup,cb)
 		var i = newfile.groupwriteaccess.indexOf(remgroup);
 		if(i != -1) 
 			newfile.groupwriteaccess.splice(i, 1);
-	blah.insert(newfile, filename, function(err2, body) {
-	if (!err2)
-	{
-		result = true;
+		blah.insert(newfile, filename, function(err2, body) {
+		if (!err2)
+			result = true;
 		cb(err2,result);
+		});
 	}
-	});
-	}
-	cb(err1,result);
+	else
+		cb(err1,result);
 	});
 }
 
@@ -594,7 +595,8 @@ function Group_AddUser(groupname,newuser,cb)
 	if (!err1)
 	{	
 		newgroup = body1;
-		newgroup.members.push(newuser);
+		try{newgroup.members.push(newuser);}
+		catch(err) {console.log("groupname field missing???");}
 		blah.insert(newgroup, groupname, function(err2, body2) {
 		var result = false;
 		if (!err2)
@@ -607,7 +609,8 @@ function Group_AddUser(groupname,newuser,cb)
 			{	
 				newbody = body3;
 				console.log(newbody);
-				newbody.grouplist.push(groupname);
+				try {newbody.grouplist.push(groupname);}
+				catch(err) { console.log("things have gone terribly wrong."); }
 				blah.insert(newbody, newuser, function(err4, body4) {
 				if (!err4)
 				{
@@ -654,6 +657,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 	if (!err)
 	{	
 		newgroup = body;
+		try{
 		for(i=0;i<newgroup.members.length;i++)
 		{
 			if(newgroup.members[i] == remuser)
@@ -666,6 +670,8 @@ function Group_RemoveUser(groupname,remuser,cb)
 		{
 			newgroup.members.splice(index, 1);
 		}
+		}
+		catch(err) { console.log("things have gone terribly wrong."); }
 		blah.insert(newgroup, groupname, function(err, body) {
 		var result = false;
 		if(!err)
@@ -676,6 +682,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 			if (!err1)
 			{	
 				newbody = body;
+				try{
 				for(i=0;i<newbody.grouplist.length;i++)
 				{
 					if(newbody.grouplist[i] == groupname)
@@ -688,6 +695,8 @@ function Group_RemoveUser(groupname,remuser,cb)
 				{
 					newbody.grouplist.splice(index, 1);
 				}
+				}
+				catch(err) { console.log("things have gone terribly wrong."); }
 				blah.insert(newbody, remuser, function(err2, body) {
 				if (!err2)
 				{
