@@ -281,7 +281,7 @@ function User_CheckWriteAccessFile(username, filename, cb)
 
 function File_Publish(username,filename,text,date,language,tags,notes,cb)
 {
-	blah.insert({type: "publication", "author": username, "isPublic": false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, "gibbertest/publications/"+username+filename, function(err, body) {
+	blah.insert({type: "publication", "author": username, "isPublic": false,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, "gibbertest/publications/"+username+filename, function(err, body) {
 	var result = false;
 	if (!err)
 		result = true;
@@ -312,7 +312,7 @@ function File_Edit(filename,newtext,cb)
 	});
 }
 
-function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,cb)
+function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,isautoplay,cb)
 {
 	var result = false;
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
@@ -329,6 +329,8 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,cb)
 			newfile.tags = newfile.tags.concat(newtags);
 		if(ispublic!=undefined)
 			newfile.isPublic = ispublic;
+		if(isautoplay!=undefined)
+			newfile.isAutoplay = isautoplay;
 		var date = new Date(),day  = date.getDate(),month = date.getMonth() + 1,year = date.getFullYear(),time = date.toLocaleTimeString();
 		newfile.lastModified = [year,month,day,time];
 		blah.insert(newfile, filename, function(err2, body) {
@@ -462,7 +464,9 @@ function File_AddGroupReadAccess(filename,newgroup,cb)
 			newfile.groupreadaccess.push(newgroup);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
+		{
 			result = true;
+		}
 		cb(err2,result);
 		});
 	}
@@ -475,21 +479,22 @@ function File_RemGroupReadAccess(filename,remgroup,cb)
 {
 	var result = false;
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
-	blah.get(filename, { revs_info: true }, function(err1, body) {
-	if (!err1)
-	{	
-		newfile = body;
-		var i = newfile.groupreadaccess.indexOf(remgroup);
-		if(i != -1) 
-			newfile.groupreadaccess.splice(i, 1);
-		blah.insert(newfile, filename, function(err2, body) {
-		if(!err2)
-			result = true;
-		cb(err2,result);
-		});
-	}
-	else
-		cb(err1,result);
+	blah.get(filename, { revs_info: true }, function(err1, body) 
+	{
+		if (!err1)
+		{	
+			newfile = body;
+			var i = newfile.groupreadaccess.indexOf(remgroup);
+			if(i != -1) 
+				newfile.groupreadaccess.splice(i, 1);
+			blah.insert(newfile, filename, function(err2, body) {
+			if(!err2)
+				result = true;
+			cb(err2,result);
+			});
+		}
+		else
+			cb(err1,result);
 	});
 }
 
@@ -503,10 +508,11 @@ function File_AddGroupWriteAccess(filename,newgroup,cb)
 		newfile = body;
 		if (newfile.groupwriteaccess.indexOf(newgroup) == -1)
 			newfile.groupwriteaccess.push(newgroup);
-		blah.insert(newfile, filename, function(err2, body) {
-		if(!err2)
-			result = true;
-		cb(err2,result);
+		blah.insert(newfile, filename, function(err2, body) 
+		{
+			if(!err2)
+				result = true;
+			cb(err2,result);
 		});
 	}
 	else

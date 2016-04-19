@@ -355,38 +355,76 @@ app.post( '/userwriteaccessfile', function( req, res ) {
 	});
 })
 
-//add authentication to check if currently logged on user is part of group *TODO FIX THESE FUNCTIONS AND STUFF
-app.post( '/groupreadaccessfile', function( req, res ) { 
-    request(
-      { uri:designURI + '_view/groupreadaccessfile', json: true }, 
-      function(e,r,b) {
-        var results = []
-        if(b.rows && b.rows.length > 0) {
-          for( var i = 0; i < b.rows.length; i++ ) {
-            var row = b.rows[ i ]
-
-            if( row.value.indexOf( [req.body.groupname,req.body.filename] ) > -1 ) results.push( row.key )
-          }
-        }
-        res.send({ results: results })
-      }
-    )
+app.post( '/groupreadaccessall', function( req, res ) { 
+	console.log("groupreadaccessall?");
+	//console.log(req.body.groupname);
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	else
+		queuehandler.group.checkuser(req.body.groupname,req.user.username,function(err,response) {
+			if(response == false)
+			{
+				res.send({ error:'you are not allowed to access this information.'})
+			}
+			else
+			{
+				console.log("user is authorized");
+				request({ uri:designURI + '_view/groupreadaccessall', json: true }, function(e,r,b) {
+				var results = [];
+				if(b.rows && b.rows.length > 0)
+				{
+					for( var i = 0; i < b.rows.length; i++ )
+					{
+						var row = b.rows[ i ];
+						console.log(row.key);
+						//console.log([req.body.groupname,req.body.filename]);
+						if( row.key == req.body.groupname) 
+							results.push( row.value._id )
+					}
+				}
+				console.log(results);
+				res.send({ results: results })
+				});
+			}
+		});
 })
 
-app.post( '/groupwriteaccessfile', function( req, res ) { 
-    request(
-      { uri:designURI + '_view/groupwriteaccessfile', json: true }, 
-      function(e,r,b) {
-        var results = []
-        if(b.rows && b.rows.length > 0) {
-          for( var i = 0; i < b.rows.length; i++ ) {
-            var row = b.rows[ i ]
-            if( row.value.indexOf( [req.body.groupname,req.body.filename] ) > -1 ) results.push( row.key )
-          }
-        }
-        res.send({ results: results })
-      }
-    )
+app.post( '/groupwriteaccessall', function( req, res ) { 
+	console.log("groupreadaccessall?");
+	//console.log(req.body.groupname);
+	if(!(req.isAuthenticated())) 
+	{
+		res.send({ error:'you are not currently logged in.' })
+	}
+	else
+		queuehandler.group.checkuser(req.body.groupname,req.user.username,function(err,response) {
+			if(response == false)
+			{
+				res.send({ error:'you are not allowed to access this information.'})
+			}
+			else
+			{
+				console.log("user is authorized");
+				request({ uri:designURI + '_view/groupwriteaccessall', json: true }, function(e,r,b) {
+				var results = [];
+				if(b.rows && b.rows.length > 0)
+				{
+					for( var i = 0; i < b.rows.length; i++ )
+					{
+						var row = b.rows[ i ];
+						console.log(row.key);
+						//console.log([req.body.groupname,req.body.filename]);
+						if( row.key == req.body.groupname) 
+							results.push( row.value._id )
+					}
+				}
+				console.log(results);
+				res.send({ results: results })
+				});
+			}
+		});
 })
 
 app.post('/fileaddreadaccess', function(req, res){
@@ -490,11 +528,12 @@ app.post('/fileremwriteaccess', function(req, res){
 })
 
 app.post('/fileaddgroupreadaccess', function(req, res){
+	console.log("addgroupreadaccess")
 	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
-	console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
+	//console.log(designURI +'_view/publications?key="'+req.body.filename+'"');
 	request({uri:designURI +'_view/publications?key="'+req.body.filename+'"'}, function(e,r,b)
 	{
 		b = JSON.parse(b);
@@ -505,7 +544,7 @@ app.post('/fileaddgroupreadaccess', function(req, res){
 			queuehandler.file.addgroupreadaccess(req.body.filename,req.body.newgroup,function(err, response)
 			{
 				if(!err)
-					res.send({ response: response });
+					res.send({ response: "group successfully authenticated to read file." });
 				else
 					res.send({err: err});
 			});
@@ -527,10 +566,10 @@ app.post('/fileremgroupreadaccess', function(req, res){
 		if(b.rows[0].value.author == req.user.username)
 		{
 			console.log("user authenticated to modify permissions.");
-			queuehandler.file.remgroupreadaccess(req.body.filename,req.body.group,function(err, response)
+			queuehandler.file.remgroupreadaccess(req.body.filename,req.body.remgroup,function(err, response)
 			{
 				if(!err)
-					res.send({ response: response });
+					res.send({ response: "group authentication successfully revoked." });
 				else
 					res.send({err: err});
 			});
@@ -577,7 +616,7 @@ app.post('/fileremgroupwriteaccess', function(req, res){
 		if(b.rows[0].value.author == req.user.username)
 		{
 			console.log("user authenticated to modify permissions.");
-			queuehandler.file.remgroupwriteaccess(req.body.filename,req.body.newgroup,function(err, response)
+			queuehandler.file.remgroupwriteaccess(req.body.filename,req.body.remgroup,function(err, response)
 			{
 				if(!err)
 					res.send({ response: response });
@@ -714,7 +753,7 @@ if( !(req.isAuthenticated()) ) {
 	}
 	queuehandler.user.authorizewrite(req.user.username,req.body.filename,function(err1,response1)
 	{
-		queuehandler.file.setmetadata(req.body.filename,req.body.newlanguage,req.body.newtags,req.body.newnotes,req.body.ispublic,function(err,response)
+		queuehandler.file.setmetadata(req.body.filename,req.body.newlanguage,req.body.newtags,req.body.newnotes,req.body.ispublic,req.body.isautoplay,function(err,response)
 		{
 			if(err)
 				res.send({error:"unable to edit file metadata."});
@@ -745,32 +784,59 @@ app.post( '/update', function( req, res, next ) {
 })
 
 app.post('/userreadfile', function (req, res, next) {
-	if(!(req.isAuthenticated()))
-		res.send({ error:'You are not currently logged in.' })
-	queuehandler.user.authorizeread(req.user.username,req.body.filename,function(err1,response1)
+	var checkpublic = false;
+	request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
 	{
-		if(response1 == true)
+		//b = JSON.parse(b);
+		var results = [];
+		console.log(req.body.filename);
+		if(b.rows && b.rows.length > 0) 
 		{
-			//retrieve file to read
-			console.log("beginning file retrieval");
-			request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
+			for(i=0;i<b.rows.length;i++)
 			{
-				//b = JSON.parse(b);
-				var results = [];
-				console.log(b.rows);
-				if(b.rows && b.rows.length > 0) 
+				console.log(b.rows[i].id);
+				console.log(b.rows[i].value.isPublic);
+				if((b.rows[i].id == req.body.filename) && (b.rows[i].value.isPublic == "true"))
 				{
-					for(i=0;i<b.rows.length;i++)
-					{
-						if(b.rows[i].id == req.body.filename)
-							results = b.rows[i];
-					}
+					results = b.rows[i];
+					checkpublic = true;
 				}
-				res.send({ results: results })
-			});
+			}
 		}
+		console.log(results);
+		if(checkpublic == true)
+			res.send({ results: results });
 		else
-			res.send({error:"User authorization failed. You are not permitted to read this file."});
+		{
+			if(!(req.isAuthenticated()))
+				res.send({ error:'You are not currently logged in.' })
+			else
+				queuehandler.user.authorizeread(req.user.username,req.body.filename,function(err1,response1)
+				{
+					if(response1 == true)
+					{
+						//retrieve file to read
+						console.log("beginning file retrieval");
+						request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
+						{
+							//b = JSON.parse(b);
+							var results = [];
+							console.log(b.rows);
+							if(b.rows && b.rows.length > 0) 
+							{
+								for(i=0;i<b.rows.length;i++)
+								{
+									if(b.rows[i].id == req.body.filename)
+										results = b.rows[i];
+								}
+							}
+							res.send({ results: results })
+						});
+					}
+					else
+						res.send({error:"User authorization failed. You are not permitted to read this file."});
+				});
+		}
 	});
 })
 

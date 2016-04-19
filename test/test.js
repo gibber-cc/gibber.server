@@ -27,6 +27,18 @@ describe('Basic User Functions', function() {
 		}
 	})
     });
+    it('should create user without error', function(done) {
+	request.post({url:'http://127.0.0.1:8080/createNewUser',form:{username:"sarah", password:"sarahsarah"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
     it('attempting to login', function(done) {
 	request.post({url:'http://127.0.0.1:8080/login',jar:true,form:{username:"stein", password:"steinstein"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
@@ -64,7 +76,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('attempting to edit metadata', function(done) {
-	request.post({url:'http://127.0.0.1:8080/filesetmetadata',jar:true,form:{filename:"gibbertest/publications/steinsteinfile",newtags:"thisisatag",newlanguage:"spanish",ispublic:true}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/filesetmetadata',jar:true,form:{filename:"gibbertest/publications/steinsteinfile",newtags:"thisisatag",newlanguage:"spanish",ispublic:false,isautoplay:false}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -219,7 +231,7 @@ describe('Basic User Functions', function() {
 		}
 	})
     });
-    it('groupremoveuser', function(done) {
+    /*it('groupremoveuser', function(done) {
 	request.post({url:'http://127.0.0.1:8080/groupremoveuser',jar:true,form:{groupname:"gibbertest/groups/steingroup",remuser:"sarah"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
@@ -230,8 +242,56 @@ describe('Basic User Functions', function() {
 			console.log(error);
 		}
 	})
+    });*/
+    it('file_addgroupreadaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
     });
-    /*it('attempting to logout', function(done) {
+    /*it('file_remgroupreadaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileremgroupreadaccess',jar:true,form:{remgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });*/
+    it('file_addgroupwriteaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    /*it('file_remgroupwriteaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileremgroupwriteaccess',jar:true,form:{remgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });*/
+    it('attempting to logout', function(done) {
 	request.get({url:'http://127.0.0.1:8080/logout',jar:true}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
@@ -256,7 +316,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('attempting to edit file body', function(done) {
-	request.post({url:'http://127.0.0.1:8080/update',jar:true,form:{filename:"gibbertest/publications/steinsteinfile", newtext:"jane doe"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/update',jar:true,form:{filename:"gibbertest/publications/steinsteinfile", newtext:"jane sarah doe"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -266,9 +326,93 @@ describe('Basic User Functions', function() {
 			console.log(error);
 		}
 	})
-    });*/
+    });
     it('attempting to retrieve file', function(done) {
-	request.post({url:'http://127.0.0.1:8080/userreadfile',jar:true,form:{filename2:"gibbertest/publications/steinsteinfile2"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/userreadfile',jar:true,form:{filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('attempting to publish file', function(done) {
+	request.post({url:'http://127.0.0.1:8080/publish',jar:true,form:{filename:"sarahfile", code:"sarah blasko", language:"english",tags:["testfile"],notes:"thesearenotes"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('file_addgroupreadaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/sarahsarahfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('file_addgroupwriteaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/sarahsarahfile"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('attempting to logout', function(done) {
+	request.get({url:'http://127.0.0.1:8080/logout',jar:true}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('attempting to login', function(done) {
+	request.post({url:'http://127.0.0.1:8080/login',jar:true,form:{username:"stein", password:"steinstein"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('attempting to check groupreadaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/groupreadaccessall',jar:true,form:{groupname:"gibbertest/groups/steingroup"}}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			console.log(body);
+			done();
+		}
+		else
+		{
+			console.log(error);
+		}
+	})
+    });
+    it('attempting to check groupwriteaccess', function(done) {
+	request.post({url:'http://127.0.0.1:8080/groupwriteaccessall',jar:true,form:{groupname:"gibbertest/groups/steingroup"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
