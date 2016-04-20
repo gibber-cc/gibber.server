@@ -870,7 +870,7 @@ app.post('/groupcreate', function(req, res, next) {
 	});
 })
 
-app.post('/groupadduser', function(req, res, next) {
+app.post('/groupaddusers', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
 	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
@@ -879,20 +879,21 @@ app.post('/groupadduser', function(req, res, next) {
 			res.send({error:"you are not authorized to add users."});
 		else
 		{
-			queuehandler.group.adduser(req.body.groupname,req.body.newuser,function(err2, response2)
+			for(i=0;i<req.body.newusers.length;i++)
 			{
-				if(err2)
+				queuehandler.group.adduser(req.body.groupname,req.body.newusers[i],function(err2, response2)
 				{
-					res.send({error:"unable to add user to group."});
-					console.log(response2);
-				}
-				else
-					res.send({msg:"successfully added user to group."});
-			});
-		}
-		
+					if(err2)
+					{
+						res.send({error:"unable to add user to group."});
+						console.log(response2);
+					}
+					else
+						res.send({msg:"successfully added user to group."});
+				});
+			}
+		}		
 	});
-	
 })
 
 app.post('/groupremoveuser', function(req, res, next) {
@@ -943,6 +944,18 @@ app.post('/groupdestroy', function(req, res, next) {
 		
 	});
 	
+})
+
+app.post('/userdestroy', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.user.destroy(req.user.username,function(err,response) {
+		if(err)
+			res.send({error:"unable to destroy user."})
+		else
+			res.send({msg:"successfully destroyed user."})
+	});
+
 })
 
 app.get( '/welcome', function( req, res, next ) {

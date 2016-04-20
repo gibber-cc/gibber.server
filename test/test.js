@@ -220,7 +220,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('groupadduser', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupadduser',jar:true,form:{groupname:"gibbertest/groups/steingroup",newuser:"sarah"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/groupaddusers',jar:true,form:{groupname:"gibbertest/groups/steingroup",newusers:["sarah","user1"]}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -411,8 +411,8 @@ describe('Basic User Functions', function() {
 		}
 	})
     });
-    it('attempting to check groupwriteaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupwriteaccessall',jar:true,form:{groupname:"gibbertest/groups/steingroup"}}, function (error, response, body) {
+    it('attempting to destroy user', function(done) {
+	request.post({url:'http://127.0.0.1:8080/userdestroy',jar:true}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
