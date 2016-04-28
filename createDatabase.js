@@ -148,9 +148,9 @@ var makeDesign = function(cb) {
       "views": {
         "users": {
           "map": function(doc) {
-            if (doc.type === 'user') emit(doc._id, doc._rev)
+            if (doc.type === 'user') emit(doc._id,doc)
           }.toString(),
-          "reduce": "_count"
+      //    "reduce": "_count"
         },
 	
 "userreadaccessfile": {
@@ -190,19 +190,13 @@ var makeDesign = function(cb) {
 
         "all": {
           "map": function(doc) {
-            emit(doc._id, doc._rev)
+            emit(doc._id, doc)
           }.toString(),
         },
         "publications": {
           "map": function(doc) {
             if (doc.type === 'publication') {
-              emit(doc._id, {
-		author: doc.author,
-                text: doc.text,
-                notes: doc.notes,
-                tags: doc.tags,
-		isPublic: doc.isPublic
-              })
+              emit(doc._id, doc)
             }
           }.toString()
         },

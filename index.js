@@ -846,7 +846,7 @@ app.post( '/createNewUser', function( req, res, next ) {
       month = date.getMonth() + 1,
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
-  queuehandler.user.create(req.body.username, req.body.password, [year,month,day,time],
+  queuehandler.user.create(req.body.username, req.body.password, [year,month,day,time], req.body.email, req.body.website, req.body.affiliation,
     function (error, response) {
       if( error ) { 
         console.log( error )

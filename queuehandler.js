@@ -103,9 +103,9 @@ function ensurequeue()
  * @param {string} date - The current date.
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
-function User_Create(username,password,date,cb)
+function User_Create(username,password,date,email,website,affiliation,cb)
 {
-	q.push(function(queuecb){couch_module.user.create(username,password,date,(err,response) => {cb(err,response); queuecb();});});
+	q.push(function(queuecb){couch_module.user.create(username,password,date,email,website,affiliation,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

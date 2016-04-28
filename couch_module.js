@@ -59,10 +59,10 @@ var couch_module = {
 
 module.exports = couch_module;
 
-function User_Create(username,password,date,cb)
+function User_Create(username,password,date,email,website,affiliation,cb)
 {
 	var result = false;
-	blah.insert({"type": "user","password": password,"grouplist":[],"joinDate": date,"website": "","affiliation": "","email": "","following": [],"friends": []}, username, function(err, body) {
+	blah.insert({"type": "user","password": password,"grouplist":[],"joinDate": date,"website": website,"affiliation": affiliation,"email": email,"following": [],"friends": []}, username, function(err, body) {
 	if (!err)	
 		cb(err,true);
 	else
@@ -281,7 +281,7 @@ function User_CheckWriteAccessFile(username, filename, cb)
 
 function File_Publish(username,filename,text,date,language,tags,notes,cb)
 {
-	blah.insert({type: "publication", "author": username, "isPublic": false,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, "gibbertest/publications/"+username+filename, function(err, body) {
+	blah.insert({type: "publication", "author": username, "isPublic": false,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, username+"/publications/"+filename, function(err, body) {
 	var result = false;
 	if (!err)
 		result = true;
