@@ -785,7 +785,7 @@ app.post( '/update', function( req, res, next ) {
 
 app.post('/userreadfile', function (req, res, next) {
 	var checkpublic = false;
-	request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
+	request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b) 
 	{
 		//b = JSON.parse(b);
 		var results = [];
@@ -796,7 +796,7 @@ app.post('/userreadfile', function (req, res, next) {
 			{
 				console.log(b.rows[i].id);
 				console.log(b.rows[i].value.isPublic);
-				if((b.rows[i].id == req.body.filename) && (b.rows[i].value.isPublic == "true"))
+				if(b.rows[i].value.isPublic == "true")
 				{
 					results = b.rows[i];
 					checkpublic = true;
@@ -817,19 +817,20 @@ app.post('/userreadfile', function (req, res, next) {
 					{
 						//retrieve file to read
 						console.log("beginning file retrieval");
-						request({ uri:designURI + '_view/publications', json: true }, function(e,r,b) 
+						request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b) 
 						{
 							//b = JSON.parse(b);
 							var results = [];
 							console.log(b.rows);
-							if(b.rows && b.rows.length > 0) 
+							results = b.rows[0];
+							/*if(b.rows && b.rows.length > 0) 
 							{
 								for(i=0;i<b.rows.length;i++)
 								{
 									if(b.rows[i].id == req.body.filename)
 										results = b.rows[i];
 								}
-							}
+							}*/
 							res.send({ results: results })
 						});
 					}
