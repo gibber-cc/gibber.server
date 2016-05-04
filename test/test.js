@@ -196,7 +196,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('groupdestroy', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupdestroy',jar:true,form:{groupname:"gibbertest/groups/steingroup"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/groupdestroy',jar:true,form:{groupname:"stein/groups/steingroup"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -220,7 +220,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('groupadduser', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupaddusers',jar:true,form:{groupname:"gibbertest/groups/steingroup",newusers:["sarah","user1"]}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/groupaddusers',jar:true,form:{groupname:"stein/groups/steingroup",newusers:["sarah","user1"]}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -232,7 +232,7 @@ describe('Basic User Functions', function() {
 	})
     });
     /*it('groupremoveuser', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupremoveuser',jar:true,form:{groupname:"gibbertest/groups/steingroup",remuser:"sarah"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/groupremoveuser',jar:true,form:{groupname:"stein/groups/steingroup",remuser:"sarah"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -244,7 +244,7 @@ describe('Basic User Functions', function() {
 	})
     });*/
     it('file_addgroupreadaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"stein/publications/steinfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"stein/groups/steingroup",filename:"stein/publications/steinfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -256,7 +256,7 @@ describe('Basic User Functions', function() {
 	})
     });
     /*it('file_remgroupreadaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileremgroupreadaccess',jar:true,form:{remgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileremgroupreadaccess',jar:true,form:{remgroup:"stein/groups/steingroup",filename:"stein/publications/steinsteinfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -268,7 +268,7 @@ describe('Basic User Functions', function() {
 	})
     });*/
     it('file_addgroupwriteaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"stein/publications/steinfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"stein/groups/steingroup",filename:"stein/publications/steinfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -280,7 +280,7 @@ describe('Basic User Functions', function() {
 	})
     });
     /*it('file_remgroupwriteaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileremgroupwriteaccess',jar:true,form:{remgroup:"gibbertest/groups/steingroup",filename:"gibbertest/publications/steinsteinfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileremgroupwriteaccess',jar:true,form:{remgroup:"stein/groups/steingroup",filename:"stein/publications/steinsteinfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -352,7 +352,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('file_addgroupreadaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"sarah/publications/sarahfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupreadaccess',jar:true,form:{newgroup:"stein/groups/steingroup",filename:"sarah/publications/sarahfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -364,7 +364,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('file_addgroupwriteaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"gibbertest/groups/steingroup",filename:"sarah/publications/sarahfile"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/fileaddgroupwriteaccess',jar:true,form:{newgroup:"stein/groups/steingroup",filename:"sarah/publications/sarahfile"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();
@@ -400,7 +400,7 @@ describe('Basic User Functions', function() {
 	})
     });
     it('attempting to check groupreadaccess', function(done) {
-	request.post({url:'http://127.0.0.1:8080/groupreadaccessall',jar:true,form:{groupname:"gibbertest/groups/steingroup"}}, function (error, response, body) {
+	request.post({url:'http://127.0.0.1:8080/groupreadaccessall',jar:true,form:{groupname:"stein/groups/steingroup"}}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
 			console.log(body);
 			done();

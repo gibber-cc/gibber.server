@@ -544,7 +544,7 @@ function File_RemGroupWriteAccess(filename,remgroup,cb)
 
 function Group_Create(groupname,owner,cb)
 {
-	blah.insert({"owner": owner,"type": "group","members": [owner]}, "gibbertest/groups/"+groupname, function(err, body) {
+	blah.insert({"owner": owner,"type": "group","members": [owner]}, owner+"/groups/"+groupname, function(err, body) {
 	var result = false;
 	if (!err)
 	{

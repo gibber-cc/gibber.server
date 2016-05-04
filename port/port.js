@@ -1,12 +1,10 @@
 var	queuehandler 	= require("../queuehandler.js"),
 	request 	= require('request'),
-	designURI 	= 'http://127.0.0.1:5984/gibbertest/_design/gibbertest/',
-	url		= 'http://127.0.0.1:5984/gibbertest/';
-	targetURI	= 'http://127.0.0.1:5984/gibber_testing8/_design/gibber';
+	sourceURI	= 'http://127.0.0.1:5984/gibber_testing8/_design/gibber';
 
 function portusers()
 {
-	request({url: targetURI + '/_view/users',json: true}, function(err, res, body) 
+	request({url: sourceURI + '/_view/users',json: true}, function(err, res, body) 
 	{
 		if (!err)
 		{
@@ -24,7 +22,7 @@ function portusers()
 
 function portpubs()
 {
-	request({url: targetURI + '/_view/publications',json: true}, function(err, res, body) 
+	request({url: sourceURI + '/_view/publications',json: true}, function(err, res, body) 
 	{
 		if (!err)
 		{
