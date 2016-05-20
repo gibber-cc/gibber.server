@@ -422,8 +422,9 @@ app.post( '/update', function( req, res, next ) {
     return
   }
   
-  console.log(req.body)
-  
+  //console.log(req.body)
+  if( req.body.__proto__ ) delete req.body.__proto__ 
+
   var docName = req.body._id.split('/')
   request.put({ 
       url:'http://127.0.0.1:5984/gibber/' + req.user.username + '%2Fpublications%2F' + docName[2], // must use username explicitly for security
@@ -758,4 +759,4 @@ function ensureAuthenticated(req, res, next) {
 
 nodemailer.sendmail = true
 server.listen( webServerPort )
-rtc.init()
+//rtc.init()
