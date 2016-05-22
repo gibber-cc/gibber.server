@@ -170,7 +170,7 @@ app.configure( function() {
   //app.use(express.logger())
   app.use( express.cookieParser() )
   //app.use(express.methodOverride())
-  app.use( express.session({ secret:'gibber gibberish gibbering', store:new RedisStore() }) )
+  app.use( express.session({ secret:'gibber gibberish gibbering' }) )// store:new RedisStore() }) )
   //{ /* */ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
   app.use( express.bodyParser() )
   

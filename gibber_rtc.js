@@ -9,7 +9,7 @@ var Duplex = require( 'stream' ).Duplex,
     share = sharejs.server.createClient({
       backend: backend
     }),
-    coreAudio = require( 'node-core-audio' ),
+    //coreAudio = require( 'node-core-audio' ),
     WebSocket = require('ws');
     //AudioContext = require('web-audio-api').AudioContext,
 
@@ -34,6 +34,7 @@ var Rtc = {
   currentAudioTime:null,
   FSU:false,
   init : function() {
+    shouldGabber = false
     Rtc.socket = new Rtc.wsLibServer({ server:Server })
     
     Rtc.socket.on( 'connection', Rtc.onClientConnection )
