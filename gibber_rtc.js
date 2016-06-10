@@ -9,6 +9,7 @@ var Duplex = require( 'stream' ).Duplex,
     share = sharejs.server.createClient({
       backend: backend
     }),
+    NanoTimer = require('nanotimer'),
     //coreAudio = require( 'node-core-audio' ),
     WebSocket = require('ws');
     //AudioContext = require('web-audio-api').AudioContext,
@@ -33,8 +34,9 @@ var Rtc = {
   blockSize: 1024,
   currentAudioTime:null,
   FSU:false,
+  timer:null,
   init : function() {
-    shouldGabber = false
+    //shouldGabber = false
     Rtc.socket = new Rtc.wsLibServer({ server:Server })
     
     Rtc.socket.on( 'connection', Rtc.onClientConnection )
@@ -44,16 +46,19 @@ var Rtc = {
     // this.audioNode.onaudioprocess = this.audioCallback.bind( this )
     // this.audioNode.connect( this.audioContext.destination )
     if( shouldGabber ) {
-      var engine = coreAudio.createNewAudioEngine();
-      engine.addAudioCallback( Rtc.audioCallback );
-      engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:1, inputChannels:1 })
+      console.log( 'GABBERING' )
+      //var engine = coreAudio.createNewAudioEngine();
+      //engine.addAudioCallback( Rtc.audioCallback );
+      //engine.setOptions({ framesPerBuffer:1024, interleaved:true, outputChannels:1, inputChannels:1 })
+      Rtc.timer = new NanoTimer()
+      Rtc.timer.setInterval( Rtc.audioCallback, '', '23219955n' )
     }
     
     Rtc.heartbeat()
   },
   fakeBuffer: [0],
   audioCallback: function() { 
-    Rtc.phase += 1024
+    Rtc.phase += 1024 //1323 //1146,6//1024
     if( Rtc.FSU ) {
       if( Math.random() < .05 ) return;
       
