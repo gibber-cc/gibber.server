@@ -99,7 +99,6 @@ passport.use(new LocalStrategy(
       // indicate failure and set a flash message.  Otherwise, return the
       // authenticated `user`.
       findByUsername(username, function(err, user) {
-        console.log( user, username, password )
         if (err) { return done(err); }
         if (!user) { 
           return done(null, false, { message: 'Unknown user ' + username }); 
@@ -377,7 +376,7 @@ app.post( '/publish', function( req, res, next ) {
         publicationDate: [year, month, day, time],
         text: req.body.code,
         tags: req.body.tags,
-        permissions : req.body.permissions,
+        permissions : req.body.permissions === 'true' ? true : false,
         isInstrument: false, //req.body.instrument,
         notes: req.body.notes
       }
@@ -514,7 +513,7 @@ app.get( '/browser', function( req, res, next ) {
       function(__e,__r,__b) {
         var recent = []
         for( var i = 0; i < __b.rows.length; i++ ){
-          //console.log( __b.rows[i].value )
+          console.log( __b.rows[i] )
           recent.push( __b.rows[i].value )
         }
         request( designURI + '_view/tutorials', function(e,r,b) {
