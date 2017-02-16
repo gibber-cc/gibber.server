@@ -175,7 +175,7 @@ function escapeString( string ) {
 var oneDay = 86400000;
 app.engine('htm', require('ejs').renderFile);
 app.configure( function() {
-  app.set('views', serverRoot + 'snippets/')
+  app.set('views', serverRoot)
   app.set('view engine', 'ejs')
   //app.use(express.logger())
   app.use( express.cookieParser() )
@@ -1229,7 +1229,7 @@ app.post( '/login', function( req, res, next ) {
       res.send({ error:'Your username or password is incorrect. Please try again.' })
     }else{
       req.logIn( user, function() { 
-        res.send({ username: user.username }) 
+        res.send({ success: true, username: user.username }) 
       });
     }
   })( req, res, next );
