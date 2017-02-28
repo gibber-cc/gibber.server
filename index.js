@@ -1238,7 +1238,7 @@ app.post( '/login', function( req, res, next ) {
 app.get('/logout', function(req, res, next){
   if( req.user ) {
     req.logout();
-    res.send({ msg:'logout complete' })
+    res.send({ success: true, msg:'logout complete' })
 	console.log(users);
   }else{
     //console.log( "There wasn't any user... " )
