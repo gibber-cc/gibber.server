@@ -274,22 +274,25 @@ app.get( '/', function(req, res){
 app.post( '/userreadaccessall', function( req, res ) {
 	if(!(req.isAuthenticated())) 
 	{
-		res.send({ error:'you are not currently logged in.' })
+		res.send({ success:false, error:'you are not currently logged in.' })
 	}
-	request({ uri:designURI + '_view/userreadaccessall', json: true }, function(e,r,b) 
-	{
-		var results = []
-		if(b.rows && b.rows.length > 0) 
-		{
-			for( var i = 0; i < b.rows.length; i++ ) 
-			{
-				var row = b.rows[ i ];
-				if( row.key.indexOf( req.user.username ) > -1 ) 
-					results.push( row.value )
-			}
-		}
-        	res.send({ results: results })
-	});
+        else
+        {
+	        request({ uri:designURI + '_view/userreadaccessall', json: true }, function(e,r,b) 
+	        {
+		        var results = []
+		        if(b.rows && b.rows.length > 0) 
+		        {
+			        for( var i = 0; i < b.rows.length; i++ ) 
+			        {
+				        var row = b.rows[ i ];
+				        if( row.key.indexOf( req.user.username ) > -1 ) 
+					        results.push( row.value )
+			        }
+		        }
+                	res.send({ success:true, results: results })
+	        });
+        }
 })
 
 app.post( '/userwriteaccessall', function( req, res ) {
@@ -309,7 +312,7 @@ app.post( '/userwriteaccessall', function( req, res ) {
 					results.push( row.value )
 			}
 		}
-		res.send({ results: results })
+		res.send({ success:true, results: results })
       });
 })
 
@@ -320,6 +323,7 @@ app.post( '/userreadaccessfile', function( req, res ) {
 	}
 	request({ uri:designURI + '_view/userreadaccessfile', json: true }, function(e,r,b)
 	{
+                console.log(req.body);
 		var results = []
 		if(b.rows && b.rows.length > 0)
 		{
@@ -330,7 +334,7 @@ app.post( '/userreadaccessfile', function( req, res ) {
 					results.push( row.value )
 			}
 		}
-		res.send({ results: results })
+		res.send({ success:true, results: results })
 	});
 })
 
@@ -351,7 +355,7 @@ app.post( '/userwriteaccessfile', function( req, res ) {
 					results.push( row.value );
 			}
 		}
-		res.send({ results: results })
+		res.send({ success:true, results: results })
 	});
 })
 
