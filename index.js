@@ -10,10 +10,10 @@ var request         = require( 'request' ),
     queuehandler    = require("./queuehandler.js"),
     shareCodeMirror = require( 'share-codemirror'),
     app             = express(),
-    RedisStore      = require( 'connect-redis' )( express ),        
+    RedisStore      = require( 'connect-redis' )( express ),
     server          = require( 'http' ).createServer( app ),
     util            = require( 'util' ),
-    LocalStrategy   = require( 'passport-local' ).Strategy,  
+    LocalStrategy   = require( 'passport-local' ).Strategy,
     queryString     = require( 'querystring' ),
     //rtc             = require( './gibber_rtc.js' )( server, process.argv[4] ),
     nodemailer      = require( 'nodemailer' ),
@@ -27,7 +27,7 @@ var request         = require( 'request' ),
 
 function findById(id, fn) {
   var idx = id;
-  if (users[idx]) 
+  if (users[idx])
   {
     //console.log("deserialize returning not null")
     fn(null, users[idx]);
@@ -41,8 +41,8 @@ function findById(id, fn) {
 function findByUsername(username, fn)
 {
 	//console.log("searching for "+username);
-	queuehandler.user.checkinfo(username, 
-	function(err,response) 
+	queuehandler.user.checkinfo(username,
+	function(err,response)
 	{
 		if(response && !err)
 		{
@@ -64,7 +64,7 @@ function findByUsername(username, fn)
 /*TODO add tag functionality to couch_module (added to file_publish) then come back and stare at this*/
 function findByTag( tag, fn ) {
    request(
-    { uri:designURI + '_view/tagged', json: true }, 
+    { uri:designURI + '_view/tagged', json: true },
     function(e,r,b) {
       // console.log(b.rows)
       var results = []
@@ -85,15 +85,15 @@ function findByTag( tag, fn ) {
 //   serialize users into and deserialize users out of the session.  Typically,
 //   this will be as simple as storing the user ID when serializing, and finding
 //   the user by ID when deserializing.
-passport.serializeUser( function(user, done) { 
+passport.serializeUser( function(user, done) {
  // console.log("serializing");
-  done(null, user.id); 
+  done(null, user.id);
 });
 
 passport.deserializeUser(function(id, done) {
   //console.log("deserializing atempt");
-  findById(id, function (err, user) { 
-    done(err, user); 
+  findById(id, function (err, user) {
+    done(err, user);
   });
 });
 
@@ -112,11 +112,11 @@ passport.use(new LocalStrategy(
       findByUsername(username, function(err, user) {
         //console.log( user, username, password )
         if (err) { return done(err); }
-        if (!user) { 
-          return done(null, false, { message: 'Unknown user ' + username }); 
+        if (!user) {
+          return done(null, false, { message: 'Unknown user ' + username });
         }
-        if (user.password != password) { 
-          return done(null, false, { message: 'Invalid password' }); 
+        if (user.password != password) {
+          return done(null, false, { message: 'Invalid password' });
         }
         return done(null, user);
       })
@@ -143,23 +143,23 @@ var checkForREST = function( req, res, next ) {
       // res.redirect( 'http://gibber.mat.ucsb.edu/?url='+url, { loadFile: body } )
     })
   }else{
-    next()  
+    next()
   }
 }
 
 var checkForVersion = function( req, res, next ) {
   var version = null,
       search = /\/(v(\d+))/.exec( req.originalUrl )
-    
+
   if( search && search.length !== 0 ) {
     version = search[2]
     remove = search[1]
-    
+
     req.url = req.url.slice( remove.length + 1 ) // remove version string from URL
   }
 
   req.gibberVersion = version
-  
+
   next()
 }
 
@@ -170,7 +170,7 @@ function escapeString( string ) {
     return entityMap[ s ];
   });
 }
-  
+
 // var app = express();
 var oneDay = 86400000;
 app.engine('htm', require('ejs').renderFile);
@@ -183,22 +183,22 @@ app.configure( function() {
   app.use( express.session({ secret:'gibber gibberish gibbering'}) )
   //{ /* */ secret: 'gibber gibberish gibbering', expires:false, maxAge:10000000000 }) )
   app.use( express.bodyParser() )
-  
+
   app.use( passport.initialize() )
   app.use( passport.session() )
-  
+
   app.use( allowCrossDomain )
-  
+
   app.use( checkForVersion )
-  
+
   app.use( app.router )
-  
+
   app.use( checkForREST )
-  
+
   app.use( express.static( sharejs.scriptsDir ) )
   // serve share codemirror plugin
   app.use( express.static( shareCodeMirror.scriptsDir ) )
-    
+
   app.use( express.static( serverRoot/*, { maxAge:oneDay } */ ) )
 
   app.use(function(err, req, res, next){
@@ -209,13 +209,13 @@ app.configure( function() {
 
 app.get( '/', function(req, res){
   var path, version = null
-  
+
   if( req.query ) {
     if( req.query.path || req.query.p ) {
       path = req.query.path || req.query.p
       if( path.indexOf('/publications') === -1 ) { // shorthand to leave publications out of url
         var arr = path.split( '/' )
-    
+
         path = arr[0] + '/publications/' + arr[1]
       }
 
@@ -229,13 +229,13 @@ app.get( '/', function(req, res){
       })
     }else if( req.query.i ) {
       path = req.query.i
-      
+
       if( path.indexOf('/publications') === -1 ) { // shorthand to leave publications out of url
         var arr = path.split( '/' )
-    
+
         path = arr[0] + '/publications/' + arr[1]
       }
-      
+
       request('http://127.0.0.1:5984/gibber/' + escapeString( path ), function(err, response, body) {
         var _body = JSON.parse( body )
         if( body && typeof body.error === 'undefined' ) {
@@ -246,7 +246,7 @@ app.get( '/', function(req, res){
       })
     }else if( req.query.u || req.query.user ) {
       path = req.query.u || req.query.user
-      
+
       request( designURI + '_view/publications?key=%22'+path+'%22', function(e,r,_b) {
         res.render( 'instrumentBrowser', {
           user: path,
@@ -272,21 +272,21 @@ app.get( '/', function(req, res){
 })
 
 app.post( '/userreadaccessall', function( req, res ) {
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ success:false, error:'you are not currently logged in.' })
 	}
         else
         {
-	        request({ uri:designURI + '_view/userreadaccessall', json: true }, function(e,r,b) 
+	        request({ uri:designURI + '_view/userreadaccessall', json: true }, function(e,r,b)
 	        {
 		        var results = []
-		        if(b.rows && b.rows.length > 0) 
+		        if(b.rows && b.rows.length > 0)
 		        {
-			        for( var i = 0; i < b.rows.length; i++ ) 
+			        for( var i = 0; i < b.rows.length; i++ )
 			        {
 				        var row = b.rows[ i ];
-				        if( row.key.indexOf( req.user.username ) > -1 ) 
+				        if( row.key.indexOf( req.user.username ) > -1 )
 					        results.push( row.value )
 			        }
 		        }
@@ -296,14 +296,14 @@ app.post( '/userreadaccessall', function( req, res ) {
 })
 
 app.post( '/userwriteaccessall', function( req, res ) {
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
-	request({ uri:designURI + '_view/userwriteaccessall', json: true }, function(e,r,b) 
+	request({ uri:designURI + '_view/userwriteaccessall', json: true }, function(e,r,b)
 	{
 		var results = [];
-		if(b.rows && b.rows.length > 0) 
+		if(b.rows && b.rows.length > 0)
 		{
 			for( var i = 0; i < b.rows.length; i++ )
 			{
@@ -317,7 +317,7 @@ app.post( '/userwriteaccessall', function( req, res ) {
 })
 
 app.post( '/userreadaccessfile', function( req, res ) {
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
@@ -339,11 +339,11 @@ app.post( '/userreadaccessfile', function( req, res ) {
 })
 
 app.post( '/userwriteaccessfile', function( req, res ) {
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
-	request({ uri:designURI + '_view/userwriteaccessfile', json: true }, function(e,r,b) 
+	request({ uri:designURI + '_view/userwriteaccessfile', json: true }, function(e,r,b)
 	{
 		var results = []
 		if(b.rows && b.rows.length > 0)
@@ -359,10 +359,10 @@ app.post( '/userwriteaccessfile', function( req, res ) {
 	});
 })
 
-app.post( '/groupreadaccessall', function( req, res ) { 
+app.post( '/groupreadaccessall', function( req, res ) {
 	console.log("groupreadaccessall?");
 	//console.log(req.body.groupname);
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
@@ -384,7 +384,7 @@ app.post( '/groupreadaccessall', function( req, res ) {
 						var row = b.rows[ i ];
 						console.log(row.key);
 						//console.log([req.body.groupname,req.body.filename]);
-						if( row.key == req.body.groupname) 
+						if( row.key == req.body.groupname)
 							results.push( row.value._id )
 					}
 				}
@@ -395,10 +395,10 @@ app.post( '/groupreadaccessall', function( req, res ) {
 		});
 })
 
-app.post( '/groupwriteaccessall', function( req, res ) { 
+app.post( '/groupwriteaccessall', function( req, res ) {
 	console.log("groupreadaccessall?");
 	//console.log(req.body.groupname);
-	if(!(req.isAuthenticated())) 
+	if(!(req.isAuthenticated()))
 	{
 		res.send({ error:'you are not currently logged in.' })
 	}
@@ -420,7 +420,7 @@ app.post( '/groupwriteaccessall', function( req, res ) {
 						var row = b.rows[ i ];
 						console.log(row.key);
 						//console.log([req.body.groupname,req.body.filename]);
-						if( row.key == req.body.groupname) 
+						if( row.key == req.body.groupname)
 							results.push( row.value._id )
 					}
 				}
@@ -634,10 +634,10 @@ app.post('/fileremgroupwriteaccess', function(req, res){
 
 
 
-app.get( '/tag', function( req, res ) { 
+app.get( '/tag', function( req, res ) {
   if( req.query.tag ) {
     request(
-      { uri:designURI + '_view/tagged', json: true }, 
+      { uri:designURI + '_view/tagged', json: true },
       function(e,r,b) {
         var results = []
         if(b.rows && b.rows.length > 0) {
@@ -655,7 +655,7 @@ app.get( '/tag', function( req, res ) {
 
 app.get( '/recent', function( req, res ) {
   request(
-    { uri:designURI + '_view/recent?descending=true&limit=20', json: true }, 
+    { uri:designURI + '_view/recent?descending=true&limit=20', json: true },
     function(e,r,b) {
       res.send({ results: b.rows })
     }
@@ -680,7 +680,7 @@ app.post( '/requestPassword', function(req, res){
         to: email,
         subject:'gibber password reminder',
         text:'As requested, your gibber password is ' + password + '.'
-      })       
+      })
       res.send({ result:'success', msg:'An email with your password been sent to ' + email })
     }
   })
@@ -709,16 +709,16 @@ app.post( '/retrieve', function( req, res, next ) {
   // console.log( req.body )
   var suffix = req.body.address.replace(/\//g, '%2F'),
       _url = 'http://127.0.0.1:5984/gibber/' + suffix
-      
-  
+
+
   if( _url.indexOf('%2Fpublications') === -1 ) { // shorthand to leave publications out of url
     var arr = _url.split( '/' )
-    
+
     _url = arr[0] + '%2Fpublications%2F' + arr[1]
   }
-  
+
   _url += suffix.indexOf('?') > -1 ? "&revs_info=true" : "?revs_info=true"
-  
+
   request( _url, function(e,r,b) {
     //console.log( e, b )
     res.send( b )
@@ -739,7 +739,7 @@ if( !(req.isAuthenticated()) ) {
       month = date.getMonth() + 1,
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
-	
+
 	queuehandler.file.publish(req.user.username,req.body.filename,req.body.code,[year,month,day,time],req.body.language,req.body.tags,req.body.notes,
 	function(err,response)
 	{
@@ -780,7 +780,7 @@ app.post( '/update', function( req, res, next ) {
 				if(err2)
 					res.send({error:"Unable to update file."});
 				else
-					res.send({msg:"Successfully updated file."});
+					res.send({success:true, msg:"Successfully updated file."});
 			});
 		else
 			res.send({error:"User authorization failed. You are not permitted to update this file."});
@@ -789,12 +789,12 @@ app.post( '/update', function( req, res, next ) {
 
 app.post('/userreadfile', function (req, res, next) {
 	var checkpublic = false;
-	request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b) 
+	request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b)
 	{
 		//b = JSON.parse(b);
 		var results = [];
 		console.log(req.body.filename);
-		if(b.rows && b.rows.length > 0) 
+		if(b.rows && b.rows.length > 0)
 		{
 			for(i=0;i<b.rows.length;i++)
 			{
@@ -821,13 +821,13 @@ app.post('/userreadfile', function (req, res, next) {
 					{
 						//retrieve file to read
 						console.log("beginning file retrieval");
-						request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b) 
+						request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b)
 						{
 							//b = JSON.parse(b);
 							var results = [];
 							console.log(b.rows);
 							results = b.rows[0];
-							/*if(b.rows && b.rows.length > 0) 
+							/*if(b.rows && b.rows.length > 0)
 							{
 								for(i=0;i<b.rows.length;i++)
 								{
@@ -845,7 +845,7 @@ app.post('/userreadfile', function (req, res, next) {
 	});
 })
 
-app.post( '/createNewUser', function( req, res, next ) { 
+app.post( '/createNewUser', function( req, res, next ) {
   var date = new Date(),
       day  = date.getDate(),
       month = date.getMonth() + 1,
@@ -853,10 +853,10 @@ app.post( '/createNewUser', function( req, res, next ) {
       time = date.toLocaleTimeString()
   queuehandler.user.create(req.body.username, req.body.password, [year,month,day,time], req.body.email, req.body.website, req.body.affiliation,
     function (error, response) {
-      if( error ) { 
+      if( error ) {
         console.log( error )
-        res.send({ msg: 'The server was unable to create your account' }) 
-      } else { 
+        res.send({ msg: 'The server was unable to create your account' })
+      } else {
         res.send({ msg:'User account created' })
       }
     }
@@ -878,7 +878,7 @@ app.post('/groupcreate', function(req, res, next) {
 app.post('/groupaddusers', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
 	{
 		if(err1)
 			res.send({error:"you are not authorized to add users."});
@@ -897,14 +897,14 @@ app.post('/groupaddusers', function(req, res, next) {
 						res.send({msg:"successfully added user to group."});
 				});
 			}
-		}		
+		}
 	});
 })
 
 app.post('/groupremoveuser', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
 	{
 		if(err1)
 			res.send({error:"you are not authorized to remove users."});
@@ -921,15 +921,15 @@ app.post('/groupremoveuser', function(req, res, next) {
 					res.send({msg:"successfully removed user from group."});
 			});
 		}
-		
+
 	});
-	
+
 })
 
 app.post('/groupdestroy', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1) 
+	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
 	{
 		if(err1)
 			res.send({error:"you are not authorized to destroy this group."});
@@ -946,9 +946,9 @@ app.post('/groupdestroy', function(req, res, next) {
 					res.send({msg:"successfully destroyed group."});
 			});
 		}
-		
+
 	});
-	
+
 })
 
 app.post('/userdestroy', function(req, res, next) {
@@ -985,10 +985,10 @@ app.get( '/help', function( req, res, next ) {
     user:req.user
   })
 })
-app.get( '/docs/', function( req,res,next ) { 
+app.get( '/docs/', function( req,res,next ) {
   res.render( '../docs/output/'+req.query.group+'/'+req.query.file+'.htm' )
 })
-app.get( '/credits', function( req,res,next ) { 
+app.get( '/credits', function( req,res,next ) {
   res.render( 'credits' )
 })
 
@@ -997,24 +997,24 @@ app.locals.inspect = require('util').inspect;
 
 app.get( '/browser', function( req, res, next ) {
   var demos = {}
-  request( designURI + '_view/demos', function(e,r,b) { 
+  request( designURI + '_view/demos', function(e,r,b) {
     var audio = [], visual = [], audiovisual = [], demoRows = JSON.parse( b ).rows
 
     for( var i =0; i < demoRows.length; i++ ) {
       var cat, row = demoRows[ i ]
-      
+
       cat = row.value.category || 'audiovisual'
-      
+
       switch( cat ) {
         case 'Visual': visual.push( row ); break;
         case 'Audio' : audio.push(  row ); break;
         default: audiovisual.push(  row ); break;
       }
     }
-    
+
     demos.visual = visual; demos.audio = audio; demos.audiovisual = audiovisual;
-    
-    request( { uri:designURI + '_view/recent?descending=true&limit=20', json: true }, 
+
+    request( { uri:designURI + '_view/recent?descending=true&limit=20', json: true },
       function(__e,__r,__b) {
         var recent = []
         for( var i = 0; i < __b.rows.length; i++ ){
@@ -1040,12 +1040,12 @@ app.get( '/browser', function( req, res, next ) {
               }
             }
           }
-                    
+
           if( req.user ) {
             //console.log("USER ACCOUNT")
-            request({ 
-              uri:designURI + '_view/publications?key=%22'+req.user.username+'%22', 
-              json:true 
+            request({
+              uri:designURI + '_view/publications?key=%22'+req.user.username+'%22',
+              json:true
             },
             function(e,r,_b) {
               //console.log(_b)
@@ -1057,7 +1057,7 @@ app.get( '/browser', function( req, res, next ) {
                 _3d:_3d,
                 misc:_misc,
                 userfiles:_b.rows,
-                recent: recent, 
+                recent: recent,
               });
             })
           }else{
@@ -1081,9 +1081,9 @@ app.get( '/browser', function( req, res, next ) {
 
 app.post( '/userfiles', function( req,res,next ) {
   if( req.user && req.user.username ) {
-    request({ 
-      uri:designURI + '_view/publications?key=%22'+req.user.username+'%22', 
-      json:true 
+    request({
+      uri:designURI + '_view/publications?key=%22'+req.user.username+'%22',
+      json:true
     },
     function(e,r,_b) {
       res.send({
@@ -1111,16 +1111,16 @@ app.get( '/demos', function( req, res, next ) {
 
     for( var i =0; i < demoRows.length; i++ ) {
       var cat, row = demoRows[ i ]
-      
+
       cat = row.demoCategory || 'audiovisual'
-      
+
       switch( cat ) {
         case 'visual': visual.push( row ); break;
         case 'audio' : audio.push(  row ); break;
         default: audiovisual.push( row );  break;
       }
     }
-    
+
     res.render( 'demos', { audio:audio, visual:visual, audiovisual:audiovisual})
   })
 })
@@ -1134,17 +1134,17 @@ app.post( '/search', function( req, res, next) {
   var result = {},
       query = queryString.escape(req.body.query), filter = req.body.filter,
       url = searchURL + filter + "?q="+query
-  
+
   console.log( "SEARCH REQUEST", url )
-  
+
   if( typeof query === 'undefined' || typeof filter === 'undefined') {
     result.error = 'Search query or search type is undefined.'
     res.send( result )
     return
   }
-  
+
   var pubs = [], count = 0
-  
+
   request({ 'url':url }, function(e,r,b) {
     //console.log( b )
     b = JSON.parse( b )
@@ -1157,23 +1157,23 @@ app.post( '/search', function( req, res, next) {
               pubID = b.rows[ i ].id,
               suffix = pubID.replace(/\//g, '%2F'),
               _url = 'http://127.0.0.1:5984/gibber/' + suffix
-      
+
           _url += suffix.indexOf('?') > -1 ? "&revs_info=false" : "?revs_info=false"
-  
+
           request( _url, function(e,r,_b) {
             _b = JSON.parse( _b )
-            
+
             delete _b.text
-            
+
             pubs[ num ] = JSON.stringify( _b )
-            
+
             if( ++count === b.rows.length  ) sendResults()
-             
+
           })
-              
+
         }()
       }
-      
+
       function sendResults() {
         res.send({ rows: pubs, totalRows:b.total_rows })
       }
@@ -1218,7 +1218,7 @@ app.post( '/search', function( req, res, next) {
         console.log(e, r)
       }
     }
-    
+
     res.send(result)
   })*/
 })
@@ -1228,12 +1228,12 @@ app.post( '/login', function( req, res, next ) {
     var data = {}
     //console.log( "LOGGING IN... ", user, err, info )
     if (err) { return next( err ) }
-    
+
     if (!user) {
       res.send({ error:'Your username or password is incorrect. Please try again.' })
     }else{
-      req.logIn( user, function() { 
-        res.send({ success: true, username: user.username }) 
+      req.logIn( user, function() {
+        res.send({ success: true, username: user.username })
       });
     }
   })( req, res, next );
@@ -1248,7 +1248,7 @@ app.get('/logout', function(req, res, next){
     //console.log( "There wasn't any user... " )
     res.send({ msg:'you aren\t logged in... how did you even try to logout?' })
   }
-  
+
   //res.redirect('/');
 });
 
