@@ -14,7 +14,6 @@ var Duplex = require( 'stream' ).Duplex,
     WebSocket = require('ws');
     //AudioContext = require('web-audio-api').AudioContext,
 
-
 var Rtc = {
   rooms : { 
     'Gibber' : {
@@ -45,7 +44,7 @@ var Rtc = {
     // this.audioNode = this.audioContext.createScriptProcessor(this.blockSize, 2, 2, this.audioContext.sampleRate)
     // this.audioNode.onaudioprocess = this.audioCallback.bind( this )
     // this.audioNode.connect( this.audioContext.destination )
-    if( shouldGabber ) {
+    if( shouldGabber === true ) {
       console.log( 'GABBERING' )
       //var engine = coreAudio.createNewAudioEngine();
       //engine.addAudioCallback( Rtc.audioCallback );
