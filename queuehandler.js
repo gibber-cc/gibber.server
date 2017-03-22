@@ -4,7 +4,7 @@
 
 var couch_module = require("./couch_module.js");
 var queue = require("queue");
- 
+
 var q = queue();
 
 function user_obj()
@@ -65,7 +65,7 @@ module.exports = queuehandler;
 var isempty = true;
 
 q.concurrency = 1;
-q.timeout = 3000; 
+q.timeout = 3000;
 
 q.on('success', function(result, job) {
   if(q.length == 0)
@@ -81,7 +81,7 @@ q.on("timeout", function(next, job)
 		});
 
 /*
- * This function is called automatically after pushing each task into the queue to ensure it is running.  
+ * This function is called automatically after pushing each task into the queue to ensure it is running.
  */
 function ensurequeue()
 {
@@ -123,7 +123,7 @@ function User_Destroy(username,cb)
 
 /**
  * Retrieves info for a specified user.
- * Response format: User info document. 
+ * Response format: User info document.
  * @param {string} username - The name of the user whose info is to be retrieved.
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
@@ -238,7 +238,7 @@ function User_CheckWriteAccessFile(username,filename,cb)
 }
 
 /**
- * Creates a new file. 
+ * Creates a new file.
  * Response format: true if successful, false if failed.
  * @param {string} username - The name of the user creating the file
  * @param {string} filename - The name of the file to be created.
@@ -246,14 +246,14 @@ function User_CheckWriteAccessFile(username,filename,cb)
  * @param {string} date - The current date.
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
-function File_Publish(username,filename,text,date,language,tags,notes,cb)
+function File_Publish(username,filename,text,date,ispublic,language,tags,notes,cb)
 {
-	q.push(function(queuecb){couch_module.file.publish(username,filename,text,date,language,tags,notes,(err,response) => {cb(err,response); queuecb();});});
+	q.push(function(queuecb){couch_module.file.publish(username,filename,text,date,ispublic,language,tags,notes,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 
 /**
- * Edits the text in an existing file. 
+ * Edits the text in an existing file.
  * Response format: true if successful, false if failed.
  * @param {string} filename - The name of the file to be edited.
  * @param {string} newtext - The new contents of the file.
@@ -281,7 +281,7 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,isautop
 }
 
 /**
- * Sets a file as publicly viewable by anyone. 
+ * Sets a file as publicly viewable by anyone.
  * Response format: true if successful, false if failed.
  * @param {string} filename - The name of the relevant file.
  * @param {string} newuser - The name of the user to be granted permission.
@@ -294,7 +294,7 @@ function File_SetIsPublic(filename,isPublic,cb)
 }
 
 /**
- * Grants a user read access permissions for the specified file. 
+ * Grants a user read access permissions for the specified file.
  * Response format: true if successful, false if failed.
  * @param {string} filename - The name of the relevant file.
  * @param {string} newuser - The name of the user to be granted permission.
@@ -307,7 +307,7 @@ function File_AddReadAccess(filename,newuser,cb)
 }
 
 /**
- * Revokes a user's read access permissions for the specified file. 
+ * Revokes a user's read access permissions for the specified file.
  * Response format: true if successful, false if failed.
  * @param {string} filename - The name of the relevant file.
  * @param {string} remuser - The name of the user whose permission is to be revoked
@@ -499,5 +499,3 @@ function Group_CheckWriteAccessFile(groupname, filename, cb)
 	q.push(function(queuecb){couch_module.group.checkwriteaccessfile(groupname, filename, (err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
-
-

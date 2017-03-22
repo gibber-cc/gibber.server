@@ -740,7 +740,7 @@ if( !(req.isAuthenticated()) ) {
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
 
-	queuehandler.file.publish(req.user.username,req.body.filename,req.body.code,[year,month,day,time],req.body.language,req.body.tags,req.body.notes,
+	queuehandler.file.publish(req.user.username,req.body.filename,req.body.code,[year,month,day,time],req.body.ispublic,req.body.language,req.body.tags,req.body.notes,
 	function(err,response)
 	{
 		if(err)
