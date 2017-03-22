@@ -63,7 +63,7 @@ function User_Create(username,password,date,email,website,affiliation,cb)
 {
 	var result = false;
 	blah.insert({"type": "user","password": password,"grouplist":[],"joinDate": date,"website": website,"affiliation": affiliation,"email": email,"following": [],"friends": []}, username, function(err, body) {
-	if (!err)	
+	if (!err)
 		cb(err,true);
 	else
 		cb(err,false);
@@ -89,7 +89,7 @@ function User_ChangePassword(username,newpwd,cb)
 	var newbody = {"type": "user","password": password,"grouplist":[],"joinDate": date,"website": "","affiliation": "","email": "","following": [],"friends": []};
 	blah.get(username, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newbody = body;
 		newbody.password = newpwd;
 		blah.insert(newbody, username, function(err2, body) {
@@ -109,7 +109,7 @@ function User_Destroy(username,cb)
 	var result = false;
 	blah.get(username, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		blah.destroy(username, body._rev, function(err2, body) {
 		if (!err2)
 		{
@@ -119,7 +119,7 @@ function User_Destroy(username,cb)
 		});
 	}
 	cb(err1,result);
-	});	
+	});
 }
 
 function User_CheckIfAuthor(username,filename,cb)
@@ -128,7 +128,7 @@ function User_CheckIfAuthor(username,filename,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		console.log(newfile);
 		if(newfile.author == username)
@@ -148,7 +148,7 @@ function User_AuthorizeRead(username,filename,cb)
 	var filebody = null;
 	blah.get(username, { revs_info: true }, function(err1, body1) {
 	if (!err1 && filename!=undefined)
-	{	
+	{
 		var user_grouplist = body1.grouplist;
 		blah.get(filename, { revs_info: true }, function(err2, body2) {
 		if(!err2)
@@ -178,7 +178,7 @@ function User_AuthorizeRead(username,filename,cb)
 		}
 		cb(err1,verified);
 		console.log("the verified status for authorizeRead is "+verified);
-		});	
+		});
 	}
 	else
 	{
@@ -196,7 +196,7 @@ function User_AuthorizeWrite(username,filename,cb)
 	var filebody = null;
 	blah.get(username, { revs_info: true }, function(err1, body1) {
 	if (!err1 && filename!=undefined)
-	{	
+	{
 		var user_grouplist = body1.grouplist;
 		blah.get(filename, { revs_info: true }, function(err2, body2) {
 		if(!err2)
@@ -228,7 +228,7 @@ function User_AuthorizeWrite(username,filename,cb)
 		cb(err1,verified);
 		console.log("the verified status for authorizeWrite is "+verified);
 		});
-		
+
 	}
 	else
 	{
@@ -279,9 +279,9 @@ function User_CheckWriteAccessFile(username, filename, cb)
 	});
 }
 
-function File_Publish(username,filename,text,date,language,tags,notes,cb)
+function File_Publish(username,filename,text,date,ispublic,language,tags,notes,cb)
 {
-	blah.insert({type: "publication", "author": username, "isPublic": false,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, username+"/publications/"+filename, function(err, body) {
+	blah.insert({type: "publication", "author": username, "isPublic": ispublic,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, username+"/publications/"+filename, function(err, body) {
 	var result = false;
 	if (!err)
 		result = true;
@@ -295,7 +295,7 @@ function File_Edit(filename,newtext,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		newfile.text = newtext;
 		var date = new Date(),day  = date.getDate(),month = date.getMonth() + 1,year = date.getFullYear(),time = date.toLocaleTimeString();
@@ -318,10 +318,10 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,isautop
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		//TODO: check for null and set defaults so all arguments don't have to be populated
 		newfile = body;
-		if(newlanguage!=undefined) 
+		if(newlanguage!=undefined)
 			newfile.language = newlanguage;
 		if(newnotes!=undefined)
 			newfile.notes = newnotes;
@@ -351,7 +351,7 @@ function File_SetIsPublic(filename,isPublic,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		newfile.isPublic = isPublic;
 		blah.insert(newfile, filename, function(err2, body) {
@@ -372,7 +372,7 @@ function File_AddReadAccess(filename,newuser,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		if (newfile.readaccess.indexOf(newuser) == -1)
 			newfile.readaccess.push(newuser);
@@ -393,10 +393,10 @@ function File_RemReadAccess(filename,remuser,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		var i = newfile.readaccess.indexOf(remuser);
-		if(i != -1) 
+		if(i != -1)
 			newfile.readaccess.splice(i, 1);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
@@ -415,7 +415,7 @@ function File_AddWriteAccess(filename,newuser,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		if (newfile.writeaccess.indexOf(newuser) == -1)
 			newfile.writeaccess.push(newuser);
@@ -436,10 +436,10 @@ function File_RemWriteAccess(filename,remuser,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		var i = newfile.writeaccess.indexOf(remuser);
-		if(i != -1) 
+		if(i != -1)
 			newfile.writeaccess.splice(i, 1);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
@@ -479,13 +479,13 @@ function File_RemGroupReadAccess(filename,remgroup,cb)
 {
 	var result = false;
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
-	blah.get(filename, { revs_info: true }, function(err1, body) 
+	blah.get(filename, { revs_info: true }, function(err1, body)
 	{
 		if (!err1)
-		{	
+		{
 			newfile = body;
 			var i = newfile.groupreadaccess.indexOf(remgroup);
-			if(i != -1) 
+			if(i != -1)
 				newfile.groupreadaccess.splice(i, 1);
 			blah.insert(newfile, filename, function(err2, body) {
 			if(!err2)
@@ -504,11 +504,11 @@ function File_AddGroupWriteAccess(filename,newgroup,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		if (newfile.groupwriteaccess.indexOf(newgroup) == -1)
 			newfile.groupwriteaccess.push(newgroup);
-		blah.insert(newfile, filename, function(err2, body) 
+		blah.insert(newfile, filename, function(err2, body)
 		{
 			if(!err2)
 				result = true;
@@ -526,10 +526,10 @@ function File_RemGroupWriteAccess(filename,remgroup,cb)
 	var newfile = {type: "publication", "author": "", "isPublic":"","readaccess":"","writeaccess":"","groupreadaccess":[],"groupwriteaccess":[],"publicationDate":"","lastModified":"","language":"","tags":"","notes":"","text":""};
 	blah.get(filename, { revs_info: true }, function(err1, body) {
 	if (!err1)
-	{	
+	{
 		newfile = body;
 		var i = newfile.groupwriteaccess.indexOf(remgroup);
-		if(i != -1) 
+		if(i != -1)
 			newfile.groupwriteaccess.splice(i, 1);
 		blah.insert(newfile, filename, function(err2, body) {
 		if (!err2)
@@ -551,7 +551,7 @@ function Group_Create(groupname,owner,cb)
 		var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
 		blah.get(owner, { revs_info: true }, function(err3, body3) {
 		if (!err3)
-		{	
+		{
 			newbody = body3;
 			console.log(newbody);
 			newbody.grouplist.push(groupname);
@@ -574,7 +574,7 @@ function Group_Create(groupname,owner,cb)
 			cb(err3,result);
 			console.log(err3);
 		}
-		});	
+		});
 		result = true;
 	}
 	cb(err,result);
@@ -589,7 +589,7 @@ function Group_Destroy(groupname,cb)
 	if (!err)
 		result = true;
 	cb(err,result);
-	});    
+	});
 	});
 }
 
@@ -599,7 +599,7 @@ function Group_AddUser(groupname,newuser,cb)
 	var newfile = {"owner": "","type": "group","members": []};
 	blah.get(groupname, { revs_info: true }, function(err1, body1) {
 	if (!err1)
-	{	
+	{
 		newgroup = body1;
 		try{newgroup.members.push(newuser);}
 		catch(err) {console.log("groupname field missing???");}
@@ -612,7 +612,7 @@ function Group_AddUser(groupname,newuser,cb)
 			var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
 			blah.get(newuser, { revs_info: true }, function(err3, body3) {
 			if (!err3)
-			{	
+			{
 				newbody = body3;
 				console.log(newbody);
 				try {newbody.grouplist.push(groupname);}
@@ -661,7 +661,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 	var index = -1;
 	blah.get(groupname, function(err, body) {
 	if (!err)
-	{	
+	{
 		newgroup = body;
 		try{
 		for(i=0;i<newgroup.members.length;i++)
@@ -672,7 +672,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 				break;
 			}
 		}
-		if (index > -1) 
+		if (index > -1)
 		{
 			newgroup.members.splice(index, 1);
 		}
@@ -681,12 +681,12 @@ function Group_RemoveUser(groupname,remuser,cb)
 		blah.insert(newgroup, groupname, function(err, body) {
 		var result = false;
 		if(!err)
-		{	
+		{
 			//remove group from user list
 			var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []};
 			blah.get(remuser, { revs_info: true }, function(err1, body) {
 			if (!err1)
-			{	
+			{
 				newbody = body;
 				try{
 				for(i=0;i<newbody.grouplist.length;i++)
@@ -697,7 +697,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 						break;
 					}
 				}
-				if (index > -1) 
+				if (index > -1)
 				{
 					newbody.grouplist.splice(index, 1);
 				}
@@ -716,7 +716,7 @@ function Group_RemoveUser(groupname,remuser,cb)
 		cb(err,result);
 		});
 	}
-	});	
+	});
 }
 
 function Group_CheckUser(groupname,checkuser,cb)
@@ -725,7 +725,7 @@ function Group_CheckUser(groupname,checkuser,cb)
 	var found = false;
 	blah.get(groupname, function(err, body) {
 	if (!err)
-	{	
+	{
 		newgroup = body;
 		for(i=0;i<newgroup.members.length;i++)
 		{
@@ -746,7 +746,7 @@ function Group_CheckOwner(groupname,checkowner,cb)
 	var found = false;
 	blah.get(groupname, function(err, body) {
 	if (!err)
-	{	
+	{
 		newgroup = body;
 		if(newgroup.owner == checkowner)
 			found = true;
@@ -778,4 +778,3 @@ function Group_CheckWriteAccessFile(groupname, filename, cb)
 	cb(err,response);
 	});
 }
-
