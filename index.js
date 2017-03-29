@@ -746,7 +746,7 @@ if( !(req.isAuthenticated()) ) {
 		if(err)
 			res.send({error:"unable to publish file."}); //TODO: detailed error messages
 		else
-			res.send({msg:"successfully published file."}); //TODO: respond properly when file successfully published
+			res.send({success:true, msg:"successfully published file.", filename: req.user.username+"/publications/"+req.body.filename}); //TODO: respond properly when file successfully published
 	}
 	);
 })

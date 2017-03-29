@@ -281,6 +281,18 @@ function User_CheckWriteAccessFile(username, filename, cb)
 
 function File_Publish(username,filename,text,date,ispublic,language,tags,notes,cb)
 {
+        if(ispublic==undefined)
+        {
+                ispublic = false;
+        }
+        if(tags==undefined)
+        {
+                tags=[];
+        }
+        if(language==undefined)
+        {
+                language="";
+        }
 	blah.insert({type: "publication", "author": username, "isPublic": ispublic,"isAutoplay":false,"readaccess":[username],"writeaccess":[username],"groupreadaccess":[],"groupwriteaccess":[],"publicationDate":date, "lastModified":date, "language": language, "tags": tags, "notes": notes, "text":text}, username+"/publications/"+filename, function(err, body) {
 	var result = false;
 	if (!err)
