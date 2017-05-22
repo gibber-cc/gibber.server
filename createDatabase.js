@@ -12,12 +12,12 @@ var request         = require( 'request' ),
     groupCount = {}
 
 var deleteDatabase = function(cb) {
-  request({ 
+  request({
     url:serverAddress,
-    method:'DELETE' 
-  }, function(e,r,b) { 
+    method:'DELETE'
+  }, function(e,r,b) {
     console.log("DELETING DATABASE:",e,b);
-    if(cb) cb() 
+    if(cb) cb()
   })
 }
 
@@ -33,7 +33,7 @@ var makeUsers = function(cb) {
     (function() {
       var name = names[i],
           _i = i;
-          
+
       request.post({url:serverAddress, json:{
           _id: name,
           type: 'user',
@@ -44,11 +44,12 @@ var makeUsers = function(cb) {
           email:  name+'@'+name+'.com',
           following: [],
           friends: [],
+          grouplist: []
         }},
         function (error, response, body) {
-          if( error ) { 
-            console.log( error ) 
-          } else { 
+          if( error ) {
+            console.log( error )
+          } else {
             if(_i === names.length -1) {
               console.log("USERS MADE")
               if(cb) cb()
@@ -68,9 +69,9 @@ var makePubs = function(cb) {
       var _i = i;
       var name = 'gibbertest', //names[ Math.floor( Math.random() * names.length ) ],
           line = lines[ Math.floor( Math.random() * lines.length ) ]
-      
+
       //console.log(name, line)
-               
+
       if( typeof pubCount[ name ] === 'undefined') { pubCount[ name ] = 0 } else { pubCount[ name ]++ }
       request.post({url:serverAddress, json:{
           _id: name + '/publications/pub' + pubCount[ name ],
@@ -91,10 +92,10 @@ var makePubs = function(cb) {
           text: line,
         }},
         function (error, response, body) {
-          if( error ) { 
-            console.log( error ) 
-          } else { 
-            //console.log( body ) 
+          if( error ) {
+            console.log( error )
+          } else {
+            //console.log( body )
             if( _i === maxPubs - 1) {
               console.log( "PUBS MADE" )
               if(cb) cb()
@@ -114,7 +115,7 @@ var makeGroups = function(cb) {
     (function() {
       var _i = i;
       var name = 'gibbertest'//names[ Math.floor( Math.random() * names.length ) ],
-               
+
       if( typeof groupCount[ name ] === 'undefined') { groupCount[ name ] = 0 } else { groupCount[ name ]++ }
       request.post({url:serverAddress, json:{
           _id: name + '/groups/group' + groupCount[ name ],
@@ -124,10 +125,10 @@ var makeGroups = function(cb) {
 	  members: ['user3'],
         }},
         function (error, response, body) {
-          if( error ) { 
-            console.log( error ) 
-          } else { 
-            //console.log( body ) 
+          if( error ) {
+            console.log( error )
+          } else {
+            //console.log( body )
             if( _i === maxGroups - 1) {
               console.log( "GROUPS MADE" )
               if(cb) cb()
@@ -141,9 +142,9 @@ var makeGroups = function(cb) {
 
 
 var makeDesign = function(cb) {
-  
-  request.put({ 
-    url: serverAddress + '/_design/gibbertest', 
+
+  request.put({
+    url: serverAddress + '/_design/gibbertest',
     json: {
       "views": {
         "users": {
@@ -152,7 +153,7 @@ var makeDesign = function(cb) {
           }.toString(),
       //    "reduce": "_count"
         },
-	
+
 "userreadaccessfile": {
       "map": function(doc) {  if( doc.readaccess ) {for( var i=0, l=doc.readaccess.length; i<l; i++) {emit([doc.readaccess[i],doc._id], doc );}}
 	  }.toString()
@@ -256,10 +257,10 @@ var makeDesign = function(cb) {
     }
   },
   function(error, response, body) {
-    if( error ) { 
-      console.log( "CREATING DESIGN ERROR:", error ) 
-    } else { 
-      console.log( "CREATING DESIGN:", body ) 
+    if( error ) {
+      console.log( "CREATING DESIGN ERROR:", error )
+    } else {
+      console.log( "CREATING DESIGN:", body )
       if(cb) cb()
     }
   })
@@ -331,7 +332,7 @@ var createDatabaseUsersAndPubs = function() {
 	testDesign6,
 	testDesign7
       ]
-      
+
   cb = function() {
     console.log( "NUM:", next )
     if( next <= functions.length - 1 ) {

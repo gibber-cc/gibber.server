@@ -863,10 +863,21 @@ app.post( '/createNewUser', function( req, res, next ) {
   )
 })
 
+app.post('/usercheckinfo', function(req, res, next) {
+        if(!(req.isAuthenticated()))
+                res.send({error:'you are not currently logged in.'})
+        queuehandler.user.checkinfo(req.user.username, function(err, response) {
+                if(err)
+                        res.send({error:"unable to retrieve user info"});
+                else
+                        res.send({success:true,response:response});
+        })
+})
+
 app.post('/groupcreate', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.group.create(req.body.newgroup,req.user.username,function(err, response)
+	queuehandler.group.create(req.body.groupname,req.user.username,function(err, response)
 	{
 		if(err)
 			res.send({error:"unable to create group."});

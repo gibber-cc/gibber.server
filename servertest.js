@@ -38,7 +38,7 @@ request.post({url:'http://127.0.0.1:8080/login',jar:true,form:{username:"stein",
 })
 
 setTimeout(function() {
-request.post({url:'http://127.0.0.1:8080/groupcreate',jar:true,form:{newgroup:"testgroup"}}, function (error, response, body) {
+request.post({url:'http://127.0.0.1:8080/groupcreate',jar:true,form:{groupname:"testgroup"}}, function (error, response, body) {
 	if (!error && response.statusCode == 200) {
 	console.log(body);
 	//console.log(response);
