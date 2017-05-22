@@ -23,7 +23,8 @@ function group_obj()
 {
 	this.create = Group_Create;
 	this.destroy = Group_Destroy;
-	this.adduser = Group_AddUser;
+        this.addpendinguser = Group_AddPendingUser;
+	this.confirmuser = Group_ConfirmUser;
 	this.removeuser = Group_RemoveUser;
 	this.checkuser = Group_CheckUser;
 	this.checkowner = Group_CheckOwner;
@@ -338,7 +339,7 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,isautop
 		if(newnotes!=undefined)
 			newfile.notes = newnotes;
 		if(newtags!=undefined)
-			newfile.tags = newfile.tags.concat(newtags);
+			newfile.tags = newtags.slice();
 		if(ispublic!=undefined)
 			newfile.isPublic = ispublic;
 		if(isautoplay!=undefined)
@@ -556,7 +557,7 @@ function File_RemGroupWriteAccess(filename,remgroup,cb)
 
 function Group_Create(groupname,owner,cb)
 {
-	blah.insert({"owner": owner,"type": "group","members": [owner]}, owner+"/groups/"+groupname, function(err, body) {
+	blah.insert({"owner": owner,"type": "group","members": [owner], "pendingmembers":[]}, owner+"/groups/"+groupname, function(err, body) {
 	var result = false;
 	if (!err)
 	{
@@ -565,7 +566,7 @@ function Group_Create(groupname,owner,cb)
 		if (!err3)
 		{
 			newbody = body3;
-			console.log(newbody);
+			//console.log(newbody);
 			newbody.grouplist.push(groupname);
 			blah.insert(newbody, owner, function(err4, body4) {
 			if (!err4)
@@ -577,14 +578,14 @@ function Group_Create(groupname,owner,cb)
 			else
 			{
 				cb(err4,result);
-				console.log(err4);
+				//console.log(err4);
 			}
 			});
 		}
 		else
 		{
 			cb(err3,result);
-			console.log(err3);
+			//console.log(err3);
 		}
 		});
 		result = true;
@@ -605,65 +606,107 @@ function Group_Destroy(groupname,cb)
 	});
 }
 
-function Group_AddUser(groupname,newuser,cb)
+function Group_AddPendingUser(groupname,newuser,cb)
 {
+        var result = false;
+        blah.get(groupname, { revs_info: true }, function(err1, body1) {
+                if(!err1)
+                {
+                        updatedGroup = body1;
+                        try{updatedGroup.pendingmembers.push(newuser);}
+                        catch(err) {console.log("no pending members field?");}
+                        //push updated group to db
+                        blah.insert(updatedGroup, groupname, function(err2, body2) {
+                                if(!err2)
+                                {
+                                        //everything's okay, i guess?
+                                        result = true;
+                                        cb(err2, result);
+                                }
+                                else
+                                {
+                                        console.log("error when pushing updated group with pending members");
+                                        cb(err2, result);
+                                }
+                        });
+                }
+                else
+                {
+                        console.log("error retrieving group to add pending members");
+                        cb(err1, result);
+                }
+        });
+}
+
+function Group_ConfirmUser(groupname,newuser,cb)
+{
+        console.log("couch_module confirmuser"+newuser);
 	var result = false;
-	var newfile = {"owner": "","type": "group","members": []};
 	blah.get(groupname, { revs_info: true }, function(err1, body1) {
-	if (!err1)
-	{
-		newgroup = body1;
-		try{newgroup.members.push(newuser);}
-		catch(err) {console.log("groupname field missing???");}
-		blah.insert(newgroup, groupname, function(err2, body2) {
-		var result = false;
-		if (!err2)
-		{
-			//adding to user grouplist
-			console.log("usergrouplisttrigger");
-			var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
-			blah.get(newuser, { revs_info: true }, function(err3, body3) {
-			if (!err3)
-			{
-				newbody = body3;
-				console.log(newbody);
-				try {newbody.grouplist.push(groupname);}
-				catch(err) { console.log("things have gone terribly wrong."); }
-				blah.insert(newbody, newuser, function(err4, body4) {
-				if (!err4)
-				{
-					console.log("successfully edited user grouplist");
-					result = true;
-					cb(err4,result);
-				}
-				else
-				{
-					cb(err4,result);
-					console.log(err4);
-				}
-				});
-			}
-			else
-			{
-				cb(err3,result);
-				console.log(err3);
-			}
-			});
-			//result = true;
-		}
-		else
-		{
-			cb(err2,result);
-			console.log(err2);
-		}
-		});
-	}
-	else
-	{
-		cb(err1,result);
-		console.log("can't find group?????");
-		console.log(err1);
-	}
+	        if (!err1)
+	        {
+		        updatedGroup = body1;
+                        userIndex = updatedGroup.pendingmembers.indexOf(newuser)
+		        if(userIndex>-1)
+                        {
+                                //add to members
+                                try{updatedGroup.members.push(newuser);}
+                                catch(err) {console.log("no  members field?");}
+                                //remove from pending members
+                                updatedGroup.pendingmembers.splice(userIndex,1);
+		                blah.insert(updatedGroup, groupname, function(err2, body2) {
+		                        var result = false;
+		                        if (!err2)
+		                        {
+			                        //adding to user grouplist
+			                        var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
+			                        blah.get(newuser, { revs_info: true }, function(err3, body3) {
+			                        if (!err3)
+			                        {
+				                        newbody = body3;
+				                        console.log(newbody);
+				                        try {newbody.grouplist.push(groupname);}
+				                        catch(err) { console.log("things have gone terribly wrong."); }
+				                        blah.insert(newbody, newuser, function(err4, body4) {
+				                        if (!err4)
+				                        {
+					                        console.log("successfully edited user grouplist");
+					                        result = true;
+					                        cb(err4,result);
+				                        }
+				                        else
+				                        {
+					                        cb(err4,result);
+					                        console.log(err4);
+				                        }
+				                        });
+			                        }
+			                        else
+			                        {
+				                        cb(err3,result);
+				                        console.log(err3);
+			                        }
+			                        });
+			                        //result = true;
+		                        }
+		                        else
+		                        {
+			                        cb(err2,result);
+			                        console.log(err2);
+		                        }
+		                });
+                        }
+                        else
+                        {
+                                cb("error: no such pending member", result);
+                        }
+	        }
+	        else
+	        {
+		        cb(err1,result);
+		        console.log("can't find group?????");
+		        console.log(err1);
+	        }
 	});
 }
 
@@ -754,16 +797,22 @@ function Group_CheckUser(groupname,checkuser,cb)
 
 function Group_CheckOwner(groupname,checkowner,cb)
 {
-	var newfile = {"owner": "","type": "group","members": []};
 	var found = false;
 	blah.get(groupname, function(err, body) {
-	if (!err)
-	{
-		newgroup = body;
-		if(newgroup.owner == checkowner)
-			found = true;
-	}
-	cb(err,found);
+	        if (!err)
+	        {
+		        newgroup = body;
+                        console.log("newgroup owner "+newgroup.owner);
+                        console.log("checkowner "+checkowner);
+		        if(newgroup.owner == checkowner)
+			        found = true;
+	        }
+                else
+                {
+                        console.log(groupname);
+                        console.log("checkowner error"+err);
+                }
+	        cb(err,found);
 	});
 }
 

@@ -26,7 +26,8 @@ function group_obj()
 {
 	this.create = Group_Create;
 	this.destroy = Group_Destroy;
-	this.adduser = Group_AddUser;
+        this.confirmuser = Group_ConfirmUser;
+	this.addpendinguser = Group_AddPendingUser;
 	this.removeuser = Group_RemoveUser;
 	this.checkuser = Group_CheckUser;
 	this.checkowner = Group_CheckOwner;
@@ -423,15 +424,28 @@ function Group_Destroy(groupname,cb)
 }
 
 /**
- * Adds a user to an existing group.
+ * Confirms a pending user in an existing group.
+ * Response format: true if successful, false if failed.
+ * @param {string} groupname - The name of the group.
+ * @param {string} newuser - The name of the user to be confirmed.
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function Group_ConfirmUser(groupname,newuser,cb)
+{
+	q.push(function(queuecb){couch_module.group.confirmuser(groupname,newuser,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Adds a pending user to an existing group.
  * Response format: true if successful, false if failed.
  * @param {string} groupname - The name of the group.
  * @param {string} newuser - The name of the user to be added.
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
-function Group_AddUser(groupname,newuser,cb)
+function Group_AddPendingUser(groupname,newuser,cb)
 {
-	q.push(function(queuecb){couch_module.group.adduser(groupname,newuser,(err,response) => {cb(err,response); queuecb();});});
+	q.push(function(queuecb){couch_module.group.addpendinguser(groupname,newuser,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

@@ -875,18 +875,23 @@ app.post('/groupcreate', function(req, res, next) {
 	});
 })
 
-app.post('/groupaddusers', function(req, res, next) {
+app.post('/groupaddpendingusers', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
 	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
 	{
 		if(err1)
+                {
+                        //console.log("unauth error starts here");
+                        //console.log(err1);
+                        //console.log(response1);
 			res.send({error:"you are not authorized to add users."});
+                }
 		else
 		{
 			for(i=0;i<req.body.newusers.length;i++)
 			{
-				queuehandler.group.adduser(req.body.groupname,req.body.newusers[i],function(err2, response2)
+				queuehandler.group.addpendinguser(req.body.groupname,req.body.newusers[i],function(err2, response2)
 				{
 					if(err2)
 					{
@@ -894,11 +899,26 @@ app.post('/groupaddusers', function(req, res, next) {
 						console.log(response2);
 					}
 					else
-						res.send({msg:"successfully added user to group."});
+						res.send({msg:"successfully added pending user to group."});
 				});
 			}
 		}
 	});
+})
+
+app.post('/groupconfirmuser', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.confirmuser(req.body.groupname, req.user.username, function(err1, response1) {
+                if(!err1)
+                {
+                        res.send({msg:"user successfully confirmed"});
+                }
+                else
+                {
+                        res.send({error:"unable to confirm user"});
+                }
+        });
 })
 
 app.post('/groupremoveuser', function(req, res, next) {
