@@ -596,13 +596,15 @@ function Group_Create(groupname,owner,cb)
 
 function Group_Destroy(groupname,cb)
 {
-	blah.get(groupname, { revs_info: true }, function(err, body) {
-	blah.destroy(groupname, body._rev, function(err, body) {
-	var result = false;
-	if (!err)
-		result = true;
-	cb(err,result);
-	});
+        console.log("groupname "+groupname);
+	blah.get(groupname, { revs_info: true }, function(err1, body1) {
+
+	        blah.destroy(groupname, body1._rev, function(err2, body2) {
+	                var result = false;
+	                if (!err2)
+		                result = true;
+	                cb(err2,result);
+	                });
 	});
 }
 

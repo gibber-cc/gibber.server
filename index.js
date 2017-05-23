@@ -960,25 +960,32 @@ app.post('/groupremoveuser', function(req, res, next) {
 app.post('/groupdestroy', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
-	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
-	{
-		if(err1)
-			res.send({error:"you are not authorized to destroy this group."});
-		else
-		{
-			queuehandler.group.destroy(req.body.groupname,function(err2, response2)
-			{
-				if(err2)
-				{
-					res.send({error:"unable to destroy group."});
-					console.log(response2);
-				}
-				else
-					res.send({msg:"successfully destroyed group."});
-			});
-		}
+        if(req.body.groupname)
+        {
+	        queuehandler.group.checkowner(req.user.username+"/groups/"+req.body.groupname,req.user.username,function(err1, response1)
+	        {
+		        if(err1)
+			        res.send({error:"you are not authorized to destroy this group."});
+		        else
+		        {
+			        queuehandler.group.destroy(req.user.username+"/groups/"+req.body.groupname,function(err2, response2)
+			        {
+				        if(err2)
+				        {
+					        res.send({error:"unable to destroy group."});
+					        console.log(response2);
+				        }
+				        else
+					        res.send({success:true, msg:"successfully destroyed group."});
+			        });
+		        }
 
-	});
+	        });
+        }
+        else
+        {
+                res.send({msg:"group name field missing"});
+        }
 
 })
 
