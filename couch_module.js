@@ -567,7 +567,7 @@ function Group_Create(groupname,owner,cb)
 		{
 			newbody = body3;
 			//console.log(newbody);
-			newbody.grouplist.push(groupname);
+			newbody.grouplist.push(owner+"/groups/"+groupname);
 			blah.insert(newbody, owner, function(err4, body4) {
 			if (!err4)
 			{
@@ -597,119 +597,155 @@ function Group_Create(groupname,owner,cb)
 function Group_Destroy(groupname,cb)
 {
         console.log("groupname "+groupname);
-	blah.get(groupname, { revs_info: true }, function(err1, body1) {
 
-	        blah.destroy(groupname, body1._rev, function(err2, body2) {
-	                var result = false;
-	                if (!err2)
-		                result = true;
-	                cb(err2,result);
+        try
+        {
+	        blah.get(groupname, { revs_info: true }, function(err1, body1) {
+                        //first remove group from grouplist of all members
+                        body1.members.forEach(function(member) {
+                                blah.get(member, {revs_info: true}, function(err2, body2) {
+                                        body2.grouplist.splice(body2.grouplist.indexOf(groupname),1);
+                                        blah.insert(body2, member, function(err3, body3) {
+                                                if(err3)
+                                                {
+                                                        console.log("error deleting from grouplist of member. proceeding...");
+                                                }
+                                        });
+                                });
+                        });
+	                blah.destroy(groupname, body1._rev, function(err3, body3) {
+	                        var result = false;
+	                        if (!err3)
+		                        result = true;
+	                        cb(err3,result);
 	                });
-	});
+	        });
+        }
+        catch(err)
+        {
+                console.log("couldn't find group");
+                cb(err,null);
+        }
 }
 
 function Group_AddPendingUser(groupname,newuser,cb)
 {
         var result = false;
-        blah.get(groupname, { revs_info: true }, function(err1, body1) {
-                if(!err1)
-                {
-                        updatedGroup = body1;
-                        try{updatedGroup.pendingmembers.push(newuser);}
-                        catch(err) {console.log("no pending members field?");}
-                        //push updated group to db
-                        blah.insert(updatedGroup, groupname, function(err2, body2) {
-                                if(!err2)
-                                {
-                                        //everything's okay, i guess?
-                                        result = true;
-                                        cb(err2, result);
-                                }
-                                else
-                                {
-                                        console.log("error when pushing updated group with pending members");
-                                        cb(err2, result);
-                                }
-                        });
-                }
-                else
-                {
-                        console.log("error retrieving group to add pending members");
-                        cb(err1, result);
-                }
-        });
+        try
+        {
+                blah.get(groupname, { revs_info: true }, function(err1, body1) {
+                        if(!err1)
+                        {
+                                updatedGroup = body1;
+                                try{updatedGroup.pendingmembers.push(newuser);}
+                                catch(err) {console.log("no pending members field?");}
+                                //push updated group to db
+                                blah.insert(updatedGroup, groupname, function(err2, body2) {
+                                        if(!err2)
+                                        {
+                                                //everything's okay, i guess?
+                                                result = true;
+                                                cb(err2, result);
+                                        }
+                                        else
+                                        {
+                                                console.log("error when pushing updated group with pending members");
+                                                cb(err2, result);
+                                        }
+                                });
+                        }
+                        else
+                        {
+                                console.log("error retrieving group to add pending members");
+                                cb(err1, result);
+                        }
+                });
+        }
+        catch(err)
+        {
+                console.log("couldn't find group");
+                cb(err,null);
+        }
 }
 
 function Group_ConfirmUser(groupname,newuser,cb)
 {
         console.log("couch_module confirmuser"+newuser);
 	var result = false;
-	blah.get(groupname, { revs_info: true }, function(err1, body1) {
-	        if (!err1)
-	        {
-		        updatedGroup = body1;
-                        userIndex = updatedGroup.pendingmembers.indexOf(newuser)
-		        if(userIndex>-1)
-                        {
-                                //add to members
-                                try{updatedGroup.members.push(newuser);}
-                                catch(err) {console.log("no  members field?");}
-                                //remove from pending members
-                                updatedGroup.pendingmembers.splice(userIndex,1);
-		                blah.insert(updatedGroup, groupname, function(err2, body2) {
-		                        var result = false;
-		                        if (!err2)
-		                        {
-			                        //adding to user grouplist
-			                        var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
-			                        blah.get(newuser, { revs_info: true }, function(err3, body3) {
-			                        if (!err3)
-			                        {
-				                        newbody = body3;
-				                        console.log(newbody);
-				                        try {newbody.grouplist.push(groupname);}
-				                        catch(err) { console.log("things have gone terribly wrong."); }
-				                        blah.insert(newbody, newuser, function(err4, body4) {
-				                        if (!err4)
-				                        {
-					                        console.log("successfully edited user grouplist");
-					                        result = true;
-					                        cb(err4,result);
-				                        }
-				                        else
-				                        {
-					                        cb(err4,result);
-					                        console.log(err4);
-				                        }
-				                        });
-			                        }
-			                        else
-			                        {
-				                        cb(err3,result);
-				                        console.log(err3);
-			                        }
-			                        });
-			                        //result = true;
-		                        }
-		                        else
-		                        {
-			                        cb(err2,result);
-			                        console.log(err2);
-		                        }
-		                });
-                        }
-                        else
-                        {
-                                cb("error: no such pending member", result);
-                        }
-	        }
-	        else
-	        {
-		        cb(err1,result);
-		        console.log("can't find group?????");
-		        console.log(err1);
-	        }
-	});
+        try
+        {
+	        blah.get(groupname, { revs_info: true }, function(err1, body1) {
+	                if (!err1)
+	                {
+		                updatedGroup = body1;
+                                userIndex = updatedGroup.pendingmembers.indexOf(newuser)
+		                if(userIndex>-1)
+                                {
+                                        //add to members
+                                        try{updatedGroup.members.push(newuser);}
+                                        catch(err) {console.log("no  members field?");}
+                                        //remove from pending members
+                                        updatedGroup.pendingmembers.splice(userIndex,1);
+		                        blah.insert(updatedGroup, groupname, function(err2, body2) {
+		                                var result = false;
+		                                if (!err2)
+		                                {
+			                                //adding to user grouplist
+			                                var newbody = {"type": "user","password": "","grouplist":[],"joinDate": "","website": "","affiliation": "","email": "","following": [],"friends": []}
+			                                blah.get(newuser, { revs_info: true }, function(err3, body3) {
+			                                if (!err3)
+			                                {
+				                                newbody = body3;
+				                                console.log(newbody);
+				                                try {newbody.grouplist.push(groupname);}
+				                                catch(err) { console.log("things have gone terribly wrong."); }
+				                                blah.insert(newbody, newuser, function(err4, body4) {
+				                                if (!err4)
+				                                {
+					                                console.log("successfully edited user grouplist");
+					                                result = true;
+					                                cb(err4,result);
+				                                }
+				                                else
+				                                {
+					                                cb(err4,result);
+					                                console.log(err4);
+				                                }
+				                                });
+			                                }
+			                                else
+			                                {
+				                                cb(err3,result);
+				                                console.log(err3);
+			                                }
+			                                });
+			                                //result = true;
+		                                }
+		                                else
+		                                {
+			                                cb(err2,result);
+			                                console.log(err2);
+		                                }
+		                        });
+                                }
+                                else
+                                {
+                                        cb("error: no such pending member", result);
+                                }
+	                }
+	                else
+	                {
+		                cb(err1,result);
+		                console.log("can't find group?????");
+		                console.log(err1);
+	                }
+	        });
+        }
+        catch(err)
+        {
+                console.log("unable to find group");
+                cb(err,null);
+        }
 }
 
 function Group_RemoveUser(groupname,remuser,cb)

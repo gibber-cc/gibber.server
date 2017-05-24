@@ -962,13 +962,13 @@ app.post('/groupdestroy', function(req, res, next) {
 		res.send({ error:'you are not currently logged in.' })
         if(req.body.groupname)
         {
-	        queuehandler.group.checkowner(req.user.username+"/groups/"+req.body.groupname,req.user.username,function(err1, response1)
+	        queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
 	        {
 		        if(err1)
 			        res.send({error:"you are not authorized to destroy this group."});
 		        else
 		        {
-			        queuehandler.group.destroy(req.user.username+"/groups/"+req.body.groupname,function(err2, response2)
+			        queuehandler.group.destroy(req.body.groupname,function(err2, response2)
 			        {
 				        if(err2)
 				        {
