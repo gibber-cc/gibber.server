@@ -882,7 +882,7 @@ app.post('/groupcreate', function(req, res, next) {
 		if(err)
 			res.send({error:"unable to create group."});
 		else
-			res.send({msg:"successfully created group."});
+			res.send({success:true, msg:"successfully created group."});
 	});
 })
 
