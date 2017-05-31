@@ -910,7 +910,7 @@ app.post('/groupaddpendingusers', function(req, res, next) {
 						console.log(response2);
 					}
 					else
-						res.send({msg:"successfully added pending user to group."});
+						res.send({success:true, msg:"successfully added pending user to group."});
 				});
 			}
 		}
