@@ -25,6 +25,7 @@ function user_obj()
 function group_obj()
 {
 	this.create = Group_Create;
+        this.viewusers = Group_ViewUsers;
 	this.destroy = Group_Destroy;
         this.confirmuser = Group_ConfirmUser;
 	this.addpendinguser = Group_AddPendingUser;
@@ -408,6 +409,18 @@ function File_RemGroupWriteAccess(filename,remgroup,cb)
 function Group_Create(groupname,owner,cb)
 {
 	q.push(function(queuecb){couch_module.group.create(groupname,owner,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Views the users belonging to a group.
+ * Response format: object with two arrays for pending and confirmed members.
+ * @param {string} groupname - The name of the group to be created.
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function Group_ViewUsers(groupname,cb)
+{
+	q.push(function(queuecb){couch_module.group.viewusers(groupname,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

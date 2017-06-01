@@ -886,6 +886,19 @@ app.post('/groupcreate', function(req, res, next) {
 	});
 })
 
+app.post('/groupviewusers', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.viewusers(req.body.groupname,function(err, response)
+	{
+
+		if(err)
+			res.send({error:"unable to create group."});
+		else
+			res.send({success:true, response:response});
+	});
+})
+
 app.post('/groupaddpendingusers', function(req, res, next) {
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })

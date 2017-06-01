@@ -22,6 +22,7 @@ function user_obj()
 function group_obj()
 {
 	this.create = Group_Create;
+        this.viewusers = Group_ViewUsers;
 	this.destroy = Group_Destroy;
         this.addpendinguser = Group_AddPendingUser;
 	this.confirmuser = Group_ConfirmUser;
@@ -592,6 +593,32 @@ function Group_Create(groupname,owner,cb)
 	}
 	cb(err,result);
 	});
+}
+
+function Group_ViewUsers(groupname,cb)
+{
+        console.log("groupviewusers");
+        var result;
+        try
+        {
+                blah.get(groupname, {revs_info:true}, function(err1,body1){
+                        if(!err1)
+                        {
+                                result = {pendingmembers:body1.pendingmembers, members:body1.members};
+                        }
+                        else
+                        {
+                                result = false;
+
+                        }
+                        cb(err1,result);
+                });
+        }
+        catch(err)
+        {
+                console.log("viewgroupusers failed");
+                cb(err,result);
+        }
 }
 
 function Group_Destroy(groupname,cb)
