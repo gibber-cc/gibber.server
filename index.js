@@ -746,7 +746,25 @@ if( !(req.isAuthenticated()) ) {
 		if(err)
 			res.send({error:"unable to publish file."}); //TODO: detailed error messages
 		else
-			res.send({success:true, msg:"successfully published file.", filename: req.user.username+"/publications/"+req.body.filename}); //TODO: respond properly when file successfully published
+                {
+		        request({ uri:designURI + '_view/publications?key="'+req.user.username+"/publications/"+req.body.filename+'"', json: true }, function(e,r,b)
+		        {
+			        //b = JSON.parse(b);
+			        var results = [];
+			        console.log(b.rows);
+			        results = b.rows[0];
+			        /*if(b.rows && b.rows.length > 0)
+			        {
+				        for(i=0;i<b.rows.length;i++)
+				        {
+					        if(b.rows[i].id == req.body.filename)
+						        results = b.rows[i];
+				        }
+			        }*/
+			        res.send({ success: true, filedata: results });
+		        });
+			//res.send({success:true, msg:"successfully published file.", filename: req.user.username+"/publications/"+req.body.filename}); //TODO: respond properly when file successfully published
+                }
 	}
 	);
 })
