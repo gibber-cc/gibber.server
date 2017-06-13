@@ -4,20 +4,23 @@
   "description": "server component for Gibber",
   "main": "index.js",
   "dependencies": {
-    "ejs": "0.8.4",
     "connect": "~2.9.0",
+    "connect-redis": "~1.4.7",
+    "ejs": "0.8.4",
     "express": "~3.4.0",
+    "express-sse": "^0.4.1",
+    "livedb": "~0.4.8",
+    "node-core-audio": "0.4.1",
+    "nodemailer": "~1.3.0",
     "passport": "~0.1.17",
     "passport-local": "~0.1.6",
-    "share": "0.7.3",
-    "request": "~2.27.0",
-    "nodemailer": "~1.3.0",
-    "connect-redis": "~1.4.7",
-    "share-codemirror": "0.0.5",
-    "livedb": "~0.4.8",
     "querystring": "~0.2.0",
-    "ws": "~0.4.32",
-    "node-core-audio": "0.4.1"
+    "request": "~2.27.0",
+    "server-sent-events": "^1.0.1",
+    "share": "0.7.3",
+    "share-codemirror": "0.0.5",
+    "sse-pusher": "^1.1.1",
+    "ws": "~0.4.32"
   },
   "devDependencies": {
     "mocha": "^2.4.5"

@@ -17,13 +17,40 @@ var request         = require( 'request' ),
     queryString     = require( 'querystring' ),
     //rtc             = require( './gibber_rtc.js' )( server, process.argv[4] ),
     nodemailer      = require( 'nodemailer' ),
+    nano            = require("nano")("http://admin:admin@localhost:5984");
+    blah            = nano.db.use("gibbertest");
+    ssePusher       = require( 'sse-pusher'),
+    pusher          = new ssePusher(),
+    changesStream   = require('changes-stream'),
     transporter     = nodemailer.createTransport(),
     webServerPort   = process.argv[2] || 80, //second argument passed to command
     serverRoot      = process.argv[3] || __dirname + '/../../',
     users           = [],
+    clients         = [],
     _url            = 'http://127.0.0.1:5984/gibbertest',
     designURI       = 'http://127.0.0.1:5984/gibbertest/_design/gibbertest/',
     searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
+
+function initializeFeed()
+{
+        var changes = new changesStream({db:'http://127.0.0.1:5984/gibbertest',feed:'continuous',since:"now",include_docs:true});
+        changes.on('readable', function() {
+                var change = changes.read();
+                if(change.doc.type == 'user')
+                {
+                        for(i=0;i<users.length;i++)
+                        {
+                                if(change.doc._id == users[i].username)
+                                {
+                                        //emit SSE
+                                        console.log("SSE emitted for "+users[i].username);
+                                        //console.log(clients[users[i].username].pusher.toString());
+                                        clients[users[i].username].pusher({data:'notificationdata'});
+                                }
+                        }
+                }
+        });
+}
 
 function findById(id, fn) {
   var idx = id;
@@ -205,6 +232,9 @@ app.configure( function() {
     console.error(err.stack);
     res.send(500, 'Something broke!');
   });
+
+  //server sent events
+  //app.use(pusher.handler('/notifications'));
 })
 
 app.get( '/', function(req, res){
@@ -270,6 +300,22 @@ app.get( '/', function(req, res){
   //   res.end( data )
   // })
 })
+
+app.get( '/notifications', ( req, res, next ) => {
+        var username = req.param('username');
+        console.log(username);
+        if(username!=undefined)
+        {
+                console.log(username+" has requested notifications. storing their pusher and handler now.");
+                // create client-specific sse stream
+                clients[username].pusher = ssePusher();
+                // store sse middleware for client
+                req.client.handler = req.client.pusher.handler()
+                clients[username].handler = clients[username].pusher.handler;
+                // pass event stream object
+                clients[username].handler( req, res, next )
+        }
+} )
 
 app.post( '/userreadaccessall', function( req, res ) {
 	if(!(req.isAuthenticated()))
@@ -761,7 +807,7 @@ if( !(req.isAuthenticated()) ) {
 						        results = b.rows[i];
 				        }
 			        }*/
-			        res.send({ success: true, filedata: results });
+			        res.send({ success: true, filedata: results.value });
 		        });
 			//res.send({success:true, msg:"successfully published file.", filename: req.user.username+"/publications/"+req.body.filename}); //TODO: respond properly when file successfully published
                 }
@@ -778,9 +824,27 @@ if( !(req.isAuthenticated()) ) {
 		queuehandler.file.setmetadata(req.body.filename,req.body.newlanguage,req.body.newtags,req.body.newnotes,req.body.ispublic,req.body.isautoplay,function(err,response)
 		{
 			if(err)
-				res.send({error:"unable to edit file metadata."});
+				res.send({success:false, error:"unable to edit file metadata."});
 			else
-				res.send({msg:"successfully edited file metadata."});
+                        {
+                                console.log(req.body.filename);
+                                request({ uri:designURI + '_view/publications?key="'+"/publications/"+req.body.filename+'"', json: true }, function(e,r,b)
+		                {
+			                //b = JSON.parse(b);
+                                        if(!e)
+                                        {
+			                        var results = [];
+			                        console.log(b.rows);
+			                        results = b.rows[0];
+			                        res.send({ success: true, filedata: results.value });
+                                        }
+                                        else
+                                        {
+                                                console.log("error retrieving file");
+                                        }
+		                });
+                        }
+
 		}
 		);
 	});
@@ -827,7 +891,7 @@ app.post('/userreadfile', function (req, res, next) {
 		}
 		console.log(results);
 		if(checkpublic == true)
-			res.send({ results: results });
+			res.send({ filedata: results[0].value });
 		else
 		{
 			if(!(req.isAuthenticated()))
@@ -1010,7 +1074,6 @@ app.post('/groupdestroy', function(req, res, next) {
 					        res.send({success:true, msg:"successfully destroyed group."});
 			        });
 		        }
-
 	        });
         }
         else
@@ -1292,27 +1355,36 @@ app.post( '/search', function( req, res, next) {
   })*/
 })
 
-app.post( '/login', function( req, res, next ) {
-  passport.authenticate( 'local', function( err, user, info ) {
-    var data = {}
-    //console.log( "LOGGING IN... ", user, err, info )
-    if (err) { return next( err ) }
+app.post( '/login', function( req, res, next )
+{
+        passport.authenticate( 'local', function( err, user, info ) {
+        //var data = {}
+        //console.log( "LOGGING IN... ", user, err, info )
+        if (err) { return next( err ) }
+        if (!user)
+        {
+                res.send({ error:'Your username or password is incorrect. Please try again.' })
+        }
+        else
+        {
+                req.logIn( user, function() {
+                res.send({ success: true, username: user.username })
+                //associate client with user for notifications
+                req.client.uid = user.username;
+                clients[user.username] = req.client;
 
-    if (!user) {
-      res.send({ error:'Your username or password is incorrect. Please try again.' })
-    }else{
-      req.logIn( user, function() {
-        res.send({ success: true, username: user.username })
-      });
-    }
+        });
+        }
   })( req, res, next );
 })
 
 app.get('/logout', function(req, res, next){
   if( req.user ) {
+	console.log(users);
+    users.splice(users.lastIndexOf(req.user),1);
+	console.log(users);
     req.logout();
     res.send({ success: true, msg:'logout complete' })
-	console.log(users);
   }else{
     //console.log( "There wasn't any user... " )
     res.send({ msg:'you aren\t logged in... how did you even try to logout?' })
@@ -1334,3 +1406,4 @@ function ensureAuthenticated(req, res, next) {
 nodemailer.sendmail = true
 server.listen( webServerPort )
 //rtc.init()
+initializeFeed();
