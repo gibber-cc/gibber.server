@@ -8,6 +8,7 @@ function user_obj()
 {
 	this.create = User_Create;
 	this.destroy = User_Destroy;
+        this.notify = User_Notify;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -122,6 +123,44 @@ function User_Destroy(username,cb)
 	}
 	cb(err1,result);
 	});
+}
+
+function User_Notify(username,notificationdata,cb)
+{
+        console.log("username is "+username);
+        var result = false;
+        blah.get(username, { revs_info: true }, function(err1,body1) {
+        if(!err1)
+        {
+                var newnotifications = [];
+                if(body1.notifications!=undefined)
+                {
+                        newnotifications = body1.notifications.slice();
+                }
+                newnotifications.push(notificationdata);
+                newfile = body1;
+                newfile.notifications = newnotifications.slice();
+                console.log(newfile);
+                blah.insert(newfile,username,function(err2,body2) {
+                if(!err2)
+                {
+                        console.log(username+" notifications updated");
+                        result = true;
+                        cb(err1, result);
+                }
+                else
+                {
+                        console.log("failed to write user notification data");
+                        cb(err2,result);
+                }
+                });
+        }
+        else
+        {
+                console.log("failed to read target user data");
+                cb(err1,result);
+        }
+        });
 }
 
 function User_CheckIfAuthor(username,filename,cb)

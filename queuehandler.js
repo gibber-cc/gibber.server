@@ -11,6 +11,7 @@ function user_obj()
 {
 	this.create = User_Create;
 	this.destroy = User_Destroy;
+        this.notify = User_Notify;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -120,6 +121,19 @@ function User_Create(username,password,date,email,website,affiliation,cb)
 function User_Destroy(username,cb)
 {
 	q.push(function(queuecb){couch_module.user.destroy(username,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Notifies a specified user.
+ * Response format: true if successful, false if failed.
+ * @param {string} username - The name of the user to be notified.
+ * @param {JSON} notificationdata - The notification data in JSON format.
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_Notify(username,notificationdata,cb)
+{
+	q.push(function(queuecb){couch_module.user.notify(username,notificationdata,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

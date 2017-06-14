@@ -45,7 +45,7 @@ function initializeFeed()
                                         //emit SSE
                                         console.log("SSE emitted for "+users[i].username);
                                         //console.log(clients[users[i].username].pusher.toString());
-                                        clients[users[i].username].pusher({data:'notificationdata'});
+                                        clients[users[i].username].pusher(change.doc.notifications);
                                 }
                         }
                 }
@@ -310,8 +310,8 @@ app.get( '/notifications', ( req, res, next ) => {
                 // create client-specific sse stream
                 clients[username].pusher = ssePusher();
                 // store sse middleware for client
-                req.client.handler = req.client.pusher.handler()
-                clients[username].handler = clients[username].pusher.handler;
+                //req.client.handler = req.client.pusher.handler()
+                clients[username].handler = clients[username].pusher.handler();
                 // pass event stream object
                 clients[username].handler( req, res, next )
         }
@@ -982,6 +982,7 @@ app.post('/groupviewusers', function(req, res, next) {
 })
 
 app.post('/groupaddpendingusers', function(req, res, next) {
+        var userindexes=[];
 	if(!(req.isAuthenticated()))
 		res.send({ error:'you are not currently logged in.' })
 	queuehandler.group.checkowner(req.body.groupname,req.user.username,function(err1, response1)
@@ -995,9 +996,9 @@ app.post('/groupaddpendingusers', function(req, res, next) {
                 }
 		else
 		{
-			for(i=0;i<req.body.newusers.length;i++)
+			req.body.newusers.forEach(function(newuser,index)
 			{
-				queuehandler.group.addpendinguser(req.body.groupname,req.body.newusers[i],function(err2, response2)
+				queuehandler.group.addpendinguser(req.body.groupname,newuser,function(err2, response2)
 				{
 					if(err2)
 					{
@@ -1005,9 +1006,21 @@ app.post('/groupaddpendingusers', function(req, res, next) {
 						console.log(response2);
 					}
 					else
-						res.send({success:true, msg:"successfully added pending user to group."});
+                                        {
+                                                var notificationdata = {type:"GROUP_INVITE",groupname:req.body.groupname,source:req.user.username};
+                                                queuehandler.user.notify(newuser,notificationdata,function(err3,response3){
+                                                        if(err3)
+                                                        {
+                                                                res.send({error:"unable to notify user"});
+                                                        }
+                                                        else
+                                                        {
+                 						res.send({success:true, msg:"successfully added pending user to group and sent notification."});
+                                                        }
+                                                });
+                                        }
 				});
-			}
+			})
 		}
 	});
 })
