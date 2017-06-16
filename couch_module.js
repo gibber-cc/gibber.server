@@ -10,6 +10,7 @@ function user_obj()
 	this.destroy = User_Destroy;
         this.notify = User_Notify;
         this.getnotifications = User_GetNotifications;
+        this.deleteallnotifications = User_DeleteAllNotifications;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -180,6 +181,37 @@ function User_GetNotifications(username,cb)
                 {
                         console.log("unable to retrieve user notifications");
                         cb(err1,notifications);
+                }
+        });
+}
+
+function User_DeleteAllNotifications(username,cb)
+{
+        var notifications=[];
+        var result = false;
+        blah.get(username, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        body1.notifications = notifications.slice();
+                        blah.insert(body1,username,function(err2,body2) {
+                                if(!err1)
+                                {
+                                        console.log("successfully wiped all notifications");
+                                        result = true;
+                                        cb(err2,result);
+                                }
+                                else
+                                {
+                                        console.log("failed to wipe all notifications");
+                                        cb(err2,result);
+                                }
+
+                        });
+                }
+                else
+                {
+                        console.log("unable to find user");
+                        cb(err1,result);
                 }
         });
 }

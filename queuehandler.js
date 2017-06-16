@@ -150,6 +150,18 @@ function User_GetNotifications(username,cb)
 	ensurequeue();
 }
 
+/**
+ * Deletes all notifications for a specified user.
+ * Response format: true if successful, false if failed.
+ * @param {string} username - The name of the user
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_DeleteAllNotifications(username,cb)
+{
+	q.push(function(queuecb){couch_module.user.deleteallnotifications(username,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
 
 /**
  * Retrieves info for a specified user.
