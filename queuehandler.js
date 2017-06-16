@@ -12,6 +12,7 @@ function user_obj()
 	this.create = User_Create;
 	this.destroy = User_Destroy;
         this.notify = User_Notify;
+        this.getnotifications = User_GetNotifications;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -136,6 +137,19 @@ function User_Notify(username,notificationdata,cb)
 	q.push(function(queuecb){couch_module.user.notify(username,notificationdata,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
+
+/**
+ * Retrieves notifications for a specified user.
+ * Response format: true if successful, false if failed.
+ * @param {string} username - The name of the user
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_GetNotifications(username,cb)
+{
+	q.push(function(queuecb){couch_module.user.getnotifications(username,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
 
 /**
  * Retrieves info for a specified user.

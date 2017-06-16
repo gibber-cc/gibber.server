@@ -314,6 +314,9 @@ app.get( '/notifications', ( req, res, next ) => {
                 clients[username].handler = clients[username].pusher.handler();
                 // pass event stream object
                 clients[username].handler( req, res, next )
+                queuehandler.user.getnotifications(username, function(err,response) {
+                        clients[username].pusher(response);
+                });
         }
 } )
 
@@ -1385,7 +1388,6 @@ app.post( '/login', function( req, res, next )
                 //associate client with user for notifications
                 req.client.uid = user.username;
                 clients[user.username] = req.client;
-
         });
         }
   })( req, res, next );

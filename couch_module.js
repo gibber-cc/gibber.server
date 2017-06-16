@@ -9,6 +9,7 @@ function user_obj()
 	this.create = User_Create;
 	this.destroy = User_Destroy;
         this.notify = User_Notify;
+        this.getnotifications = User_GetNotifications;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -160,6 +161,26 @@ function User_Notify(username,notificationdata,cb)
                 console.log("failed to read target user data");
                 cb(err1,result);
         }
+        });
+}
+
+function User_GetNotifications(username,cb)
+{
+        var notifications=[];
+        blah.get(username, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        if(body1.notifications!=undefined)
+                        {
+                                notifications = body1.notifications;
+                        }
+                        cb(err1,notifications);
+                }
+                else
+                {
+                        console.log("unable to retrieve user notifications");
+                        cb(err1,notifications);
+                }
         });
 }
 
