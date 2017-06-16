@@ -1034,7 +1034,7 @@ app.post('/groupconfirmuser', function(req, res, next) {
 	queuehandler.group.confirmuser(req.body.groupname, req.user.username, function(err1, response1) {
                 if(!err1)
                 {
-                        res.send({msg:"user successfully confirmed"});
+                        res.send({success:true,msg:"user successfully confirmed"});
                 }
                 else
                 {
