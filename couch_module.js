@@ -11,6 +11,7 @@ function user_obj()
         this.notify = User_Notify;
         this.getnotifications = User_GetNotifications;
         this.deleteallnotifications = User_DeleteAllNotifications;
+        this.addfriend = User_AddFriend;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -214,6 +215,70 @@ function User_DeleteAllNotifications(username,cb)
                         cb(err1,result);
                 }
         });
+}
+
+function User_AddFriend(username1,username2,cb)
+{
+        var result1=false;
+        var result2=false;
+        blah.get(username1, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var friends=[];
+                        if(body1.friends!=undefined)
+                        {
+                                body1.friends = friends.slice;
+                        }
+                        body1.friends.push(username2);
+                        blah.insert(body1,username1,function(err2,body2) {
+                                if(!err1)
+                                {
+                                        result1=true;
+                                }
+                                else
+                                {
+                                        console.log("couldn't add user 2 to user1's friend list");
+                                }
+                        })
+                }
+                else
+                {
+                        console.log("couldn't find user1");
+                }
+        })
+        blah.get(username2, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var friends=[];
+                        if(body1.friends!=undefined)
+                        {
+                                body1.friends = friends.slice;
+                        }
+                        body1.friends.push(username1);
+                        blah.insert(body1,username2,function(err2,body2) {
+                                if(!err1)
+                                {
+                                        result2=true;
+                                }
+                                else
+                                {
+                                        console.log("couldn't add user1 to user2's friend list");
+                                }
+                        })
+                }
+                else
+                {
+                        console.log("couldn't find user2");
+                }
+        })
+        if(result1&&result2)
+        {
+                cb({err:"add friend operation succeeded"},true);
+        }
+        else
+        {
+                cb({err:"add friend operation probably did not succeed"},false);
+        }
 }
 
 function User_CheckIfAuthor(username,filename,cb)

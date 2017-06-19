@@ -151,14 +151,27 @@ function User_GetNotifications(username,cb)
 }
 
 /**
- * Deletes all notifications for a specified user.
+ * Adds two users to each other's friend lists
  * Response format: true if successful, false if failed.
- * @param {string} username - The name of the user
+ * @param {string} username1 - The name of the first user
+ * @param {string} username1 - The name of the second user
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
 function User_DeleteAllNotifications(username,cb)
 {
 	q.push(function(queuecb){couch_module.user.deleteallnotifications(username,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Deletes all notifications for a specified user.
+ * Response format: true if successful, false if failed.
+ * @param {string} username - The name of the user
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_AddFriend(username1,username2,cb)
+{
+	q.push(function(queuecb){couch_module.user.addfriend(username1,username2,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 
