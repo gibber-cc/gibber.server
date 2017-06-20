@@ -30,6 +30,7 @@ function group_obj()
         this.viewusers = Group_ViewUsers;
 	this.destroy = Group_Destroy;
         this.confirmuser = Group_ConfirmUser;
+        this.rejectuser = Group_RejectUser;
 	this.addpendinguser = Group_AddPendingUser;
 	this.removeuser = Group_RemoveUser;
 	this.checkuser = Group_CheckUser;
@@ -499,6 +500,19 @@ function Group_Destroy(groupname,cb)
 function Group_ConfirmUser(groupname,newuser,cb)
 {
 	q.push(function(queuecb){couch_module.group.confirmuser(groupname,newuser,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Removes a pending user's invitation to an existing group.
+ * Response format: true if successful, false if failed.
+ * @param {string} groupname - The name of the group.
+ * @param {string} username - The name of the user whose invitation is to be removed
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function Group_RejectUser(groupname,username,cb)
+{
+	q.push(function(queuecb){couch_module.group.rejectuser(groupname,username,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

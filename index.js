@@ -46,7 +46,8 @@ function initializeFeed()
                                         //emit SSE
                                         console.log("SSE emitted for "+users[i].username);
                                         //console.log(clients[users[i].username].pusher.toString());
-                                        clients[users[i].username].pusher(change.doc.notifications);
+                                        try{clients[users[i].username].pusher(change.doc.notifications);}
+                                        catch(err){console.log(err);}
                                 }
                         }
                 }
@@ -305,7 +306,7 @@ app.get( '/', function(req, res){
 app.get( '/notifications', ( req, res, next ) => {
         var username = req.param('username');
         console.log(username);
-        if(username!=undefined)
+        if(username!=undefined && clients[username]!=undefined)
         {
                 console.log(username+" has requested notifications. storing their pusher and handler now.");
                 // create client-specific sse stream
@@ -1041,6 +1042,21 @@ app.post('/groupconfirmuser', function(req, res, next) {
                 else
                 {
                         res.send({error:"unable to confirm user"});
+                }
+        });
+})
+
+app.post('/grouprejectuser', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+	queuehandler.group.rejectuser(req.body.groupname, req.user.username, function(err1, response1) {
+                if(!err1)
+                {
+                        res.send({success:true,msg:"user invitation successfully removed"});
+                }
+                else
+                {
+                        res.send({error:"unable to remove user invitation"});
                 }
         });
 })

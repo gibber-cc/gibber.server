@@ -30,6 +30,7 @@ function group_obj()
 	this.destroy = Group_Destroy;
         this.addpendinguser = Group_AddPendingUser;
 	this.confirmuser = Group_ConfirmUser;
+        this.rejectuser = Group_RejectUser;
 	this.removeuser = Group_RemoveUser;
 	this.checkuser = Group_CheckUser;
 	this.checkowner = Group_CheckOwner;
@@ -881,7 +882,17 @@ function Group_ConfirmUser(groupname,newuser,cb)
 			                                {
 				                                newbody = body3;
 				                                console.log(newbody);
-				                                try {newbody.grouplist.push(groupname);}
+				                                try {
+                                                                newbody.grouplist.push(groupname);
+                                                                for(var i=0;i<newbody.notifications.length;i++)
+                                                                {
+                                                                        if((newbody.notifications[i].type=="GROUP_INVITE")&&(newbody.notifications[i].groupname==groupname))
+                                                                        {
+                                                                                newbody.notifications.splice(i,1);
+                                                                                break;
+                                                                        }
+                                                                }
+                                                                }
 				                                catch(err) { console.log("things have gone terribly wrong."); }
 				                                blah.insert(newbody, newuser, function(err4, body4) {
 				                                if (!err4)
@@ -930,6 +941,72 @@ function Group_ConfirmUser(groupname,newuser,cb)
                 console.log("unable to find group");
                 cb(err,null);
         }
+}
+
+function Group_RejectUser(groupname,username,cb)
+{
+        var result=false;
+        blah.get(groupname,{revs_info:true},function(err1,body1){
+                if(!err1)
+                {
+                        userIndex = body1.pendingmembers.indexOf(username);
+                        if(userIndex>-1)
+                        {
+                                body1.pendingmembers.splice(userIndex,1);
+                        }
+                        blah.insert(body1,groupname,function(err2,body2) {
+                                if(!err2)
+                                {
+                                        blah.get(username,{revs_info:true},function(err3,body3){
+                                                if(!err3)
+                                                {
+                                                        try
+                                                        {
+                                                                var newbody = body3;
+                                                                try{
+                                                                for(var i=0;i<newbody.notifications.length;i++)
+                                                                {
+                                                                        if((newbody.notifications[i].type=="GROUP_INVITE")&&(newbody.notifications[i].groupname==groupname))
+                                                                        {
+                                                                                newbody.notifications.splice(i,1);
+                                                                                break;
+                                                                        }
+                                                                }
+                                                                console.log(newbody);
+                                                                }
+                                                                catch(err){console.log(err)}
+                                                                blah.insert(newbody,username,function(err4,body4){
+                                                                        if(!err4)
+                                                                        {
+                                                                                result = true;
+                                                                                cb(err4,result);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                                console.log(err4);
+                                                                                cb(err4,result);
+                                                                        }
+                                                                })
+                                                        }
+                                                        catch(err){console.log(err);}
+                                                }
+                                                else
+                                                {
+                                                        cb(err3,result);
+                                                }
+                                        })
+                                }
+                                else
+                                {
+                                        cb(err2,result);
+                                }
+                        })
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        });
 }
 
 function Group_RemoveUser(groupname,remuser,cb)
