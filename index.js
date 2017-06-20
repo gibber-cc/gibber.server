@@ -29,7 +29,8 @@ var request         = require( 'request' ),
     clients         = [],
     _url            = 'http://127.0.0.1:5984/gibbertest',
     designURI       = 'http://127.0.0.1:5984/gibbertest/_design/gibbertest/',
-    searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/';
+    searchURL       = 'http://127.0.0.1:5984/_fti/local/gibber/_design/fti/',
+    notificationID  = 0;
 
 function initializeFeed()
 {
@@ -1010,7 +1011,7 @@ app.post('/groupaddpendingusers', function(req, res, next) {
 					}
 					else
                                         {
-                                                var notificationdata = {type:"GROUP_INVITE",groupname:req.body.groupname,source:req.user.username};
+                                                var notificationdata = {type:"GROUP_INVITE",id:notificationID,groupname:req.body.groupname,source:req.user.username};
                                                 queuehandler.user.notify(newuser,notificationdata,function(err3,response3){
                                                         if(err3)
                                                         {
@@ -1018,6 +1019,7 @@ app.post('/groupaddpendingusers', function(req, res, next) {
                                                         }
                                                         else
                                                         {
+                                                                notificationID++;
                  						res.send({success:true, msg:"successfully added pending user to group and sent notification."});
                                                         }
                                                 });
