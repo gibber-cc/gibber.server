@@ -506,14 +506,21 @@ function File_SetMetadata(filename,newlanguage,newtags,newnotes,ispublic,isautop
 		var date = new Date(),day  = date.getDate(),month = date.getMonth() + 1,year = date.getFullYear(),time = date.toLocaleTimeString();
 		newfile.lastModified = [year,month,day,time];
 		blah.insert(newfile, filename, function(err2, body) {
-	if (!err2)
-	{
-		result = true;
-		cb(err2,result);
+	                if (!err2)
+	                {
+		                result = true;
+		                cb(err2,newfile);
+	                }
+                        else
+                        {
+                                cb(err2,result);
+                        }
+	        });
 	}
-	});
-	}
-	cb(err1,result);
+        else
+        {
+	        cb(err1,result);
+        }
 	});
 }
 

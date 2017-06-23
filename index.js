@@ -385,7 +385,9 @@ app.post( '/userreadaccessfile', function( req, res ) {
 					results.push( row.value )
 			}
 		}
-		res.send({ success:true, results: results })
+                console.log("results");
+                console.log(results[0]);
+		res.send({ success:true, filedata: results[0] })
 	});
 })
 
@@ -832,8 +834,8 @@ if( !(req.isAuthenticated()) ) {
 				res.send({success:false, error:"unable to edit file metadata."});
 			else
                         {
-                                console.log(req.body.filename);
-                                request({ uri:designURI + '_view/publications?key="'+"/publications/"+req.body.filename+'"', json: true }, function(e,r,b)
+                                console.log(response);
+                                /*request({ uri:designURI + '_view/publications?key="'+"/publications/"+req.body.filename+'"', json: true }, function(e,r,b)
 		                {
 			                //b = JSON.parse(b);
                                         if(!e)
@@ -847,7 +849,8 @@ if( !(req.isAuthenticated()) ) {
                                         {
                                                 console.log("error retrieving file");
                                         }
-		                });
+		                });*/
+                                res.send({success: true, filedata: response});
                         }
 
 		}
