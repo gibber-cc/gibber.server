@@ -34,7 +34,7 @@ var request         = require( 'request' ),
 
 function initializeFeed()
 {
-        var changes = new changesStream({db:'http://127.0.0.1:5984/gibbertest',feed:'continuous',since:"now",include_docs:true});
+        var changes = new changesStream({db:'http://127.0.0.1:5984/gibbertest',feed:'continuous',since:"now",include_docs:true,heartbeat:15000});
         changes.on('readable', function() {
                 var change = changes.read();
                 if(change.doc.type == 'user')
