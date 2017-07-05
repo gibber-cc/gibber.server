@@ -877,6 +877,25 @@ app.post( '/update', function( req, res, next ) {
 	});
 })
 
+app.post('/likefile', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+        else
+        {
+                queuehandler.file.like(req.user.username,req.body.filename,function(err1,response1)
+                {
+                        if(response1==true)
+                        {
+                                res.send({success:true,msg:"Successfully liked file."})
+                        }
+                        else
+                        {
+                                res.send({error:"failed to like file."})
+                        }
+                })
+        }
+})
+
 app.post('/userreadfile', function (req, res, next) {
 	var checkpublic = false;
 	request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b)
