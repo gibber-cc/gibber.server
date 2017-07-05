@@ -44,6 +44,7 @@ function file_obj()
 	this.edit = File_Edit;
 	this.setmetadata = File_SetMetadata;
 	this.setispublic = File_SetIsPublic;
+        this.like = File_Like;
 	this.addreadaccess = File_AddReadAccess;
 	this.remreadaccess = File_RemReadAccess;
 	this.addwriteaccess = File_AddWriteAccess;
@@ -543,6 +544,65 @@ function File_SetIsPublic(filename,isPublic,cb)
 	}
 	cb(err1,result);
 	});
+}
+
+function File_Like(filename,username,cb)
+{
+        var result = false;
+        blah.get(filename, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        //newfile = body;
+                        if(newfile.likes==undefined)
+                        {
+                                newfile.likes = 1;
+                        }
+                        else
+                        {
+                                newfile.likes+=1;
+                        }
+                        blah.insert(newfile, filename, function(err2,body2) {
+                                if(!err2)
+                                {
+                                        //edited file, now add it to user list
+                                        blah.get(username, {revs_info:true}, function(err3,body3){
+                                                if(!err3)
+                                                {
+                                                        if(body3.liked==undefined)
+                                                        {
+                                                                body3.liked = [];
+                                                        }
+                                                        body3.liked.push(filename);
+                                                        blah.insert(body3,username,function(err4,body4){
+                                                                if(!err4)
+                                                                {
+                                                                        //everything worked
+                                                                        result = true;
+                                                                        cb(err4,result);
+                                                                }
+                                                                else
+                                                                {
+                                                                        cb(err4,result);
+                                                                }
+                                                        })
+                                                }
+                                                else
+                                                {
+                                                        cb(err3,result);
+                                                }
+                                        })
+                                }
+                                else
+                                {
+                                        cb(err2,result);
+                                }
+                        })
+                }
+                else
+                {
+                        cb(err3,result);
+                }
+        });
 }
 
 function File_AddReadAccess(filename,newuser,cb)
