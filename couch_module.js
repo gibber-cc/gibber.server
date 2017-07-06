@@ -552,55 +552,61 @@ function File_Like(filename,username,cb)
         blah.get(filename, {revs_info: true}, function(err1,body1) {
                 if(!err1)
                 {
-                        //newfile = body;
+                        var newfile = body1;
+                        if(newfile.likedby==undefined)
+                                newfile.likedby = [];
                         if(newfile.likes==undefined)
+                                newfile.likes = 0;
+                        console.log(newfile.likedby.indexOf(username));
+                        if(newfile.likedby.indexOf(username)==-1)
                         {
-                                newfile.likes = 1;
+                                newfile.likes+=1;
+                                newfile.likedby.push(username);
+                                blah.insert(newfile, filename, function(err2,body2) {
+                                        if(!err2)
+                                        {
+                                                //edited file, now add it to user list
+                                                blah.get(username, {revs_info:true}, function(err3,body3){
+                                                        if(!err3)
+                                                        {
+                                                                if(body3.liked==undefined)
+                                                                {
+                                                                        body3.liked = [];
+                                                                }
+                                                                body3.liked.push(filename);
+                                                                blah.insert(body3,username,function(err4,body4){
+                                                                        if(!err4)
+                                                                        {
+                                                                                //everything worked
+                                                                                result = true;
+                                                                                cb(err4,result);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                                cb(err4,result);
+                                                                        }
+                                                                })
+                                                        }
+                                                        else
+                                                        {
+                                                                cb(err3,result);
+                                                        }
+                                                })
+                                        }
+                                        else
+                                        {
+                                                cb(err2,result);
+                                        }
+                                })
                         }
                         else
                         {
-                                newfile.likes+=1;
+                                cb(err1,result);
                         }
-                        blah.insert(newfile, filename, function(err2,body2) {
-                                if(!err2)
-                                {
-                                        //edited file, now add it to user list
-                                        blah.get(username, {revs_info:true}, function(err3,body3){
-                                                if(!err3)
-                                                {
-                                                        if(body3.liked==undefined)
-                                                        {
-                                                                body3.liked = [];
-                                                        }
-                                                        body3.liked.push(filename);
-                                                        blah.insert(body3,username,function(err4,body4){
-                                                                if(!err4)
-                                                                {
-                                                                        //everything worked
-                                                                        result = true;
-                                                                        cb(err4,result);
-                                                                }
-                                                                else
-                                                                {
-                                                                        cb(err4,result);
-                                                                }
-                                                        })
-                                                }
-                                                else
-                                                {
-                                                        cb(err3,result);
-                                                }
-                                        })
-                                }
-                                else
-                                {
-                                        cb(err2,result);
-                                }
-                        })
                 }
                 else
                 {
-                        cb(err3,result);
+                        cb(err1,result);
                 }
         });
 }

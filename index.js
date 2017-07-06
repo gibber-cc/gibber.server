@@ -882,7 +882,7 @@ app.post('/likefile', function(req, res, next) {
 		res.send({ error:'you are not currently logged in.' })
         else
         {
-                queuehandler.file.like(req.user.username,req.body.filename,function(err1,response1)
+                queuehandler.file.like(req.body.filename,req.user.username,function(err1,response1)
                 {
                         if(response1==true)
                         {
