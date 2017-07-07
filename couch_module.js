@@ -45,6 +45,7 @@ function file_obj()
 	this.setmetadata = File_SetMetadata;
 	this.setispublic = File_SetIsPublic;
         this.like = File_Like;
+        this.unlike = File_Unlike;
 	this.addreadaccess = File_AddReadAccess;
 	this.remreadaccess = File_RemReadAccess;
 	this.addwriteaccess = File_AddWriteAccess;
@@ -557,7 +558,7 @@ function File_Like(filename,username,cb)
                                 newfile.likedby = [];
                         if(newfile.likes==undefined)
                                 newfile.likes = 0;
-                        console.log(newfile.likedby.indexOf(username));
+                        //console.log(newfile.likedby.indexOf(username));
                         if(newfile.likedby.indexOf(username)==-1)
                         {
                                 newfile.likes+=1;
@@ -579,7 +580,7 @@ function File_Like(filename,username,cb)
                                                                         {
                                                                                 //everything worked
                                                                                 result = true;
-                                                                                cb(err4,result);
+                                                                                cb(newfile,result);
                                                                         }
                                                                         else
                                                                         {
@@ -609,6 +610,64 @@ function File_Like(filename,username,cb)
                         cb(err1,result);
                 }
         });
+}
+
+function File_Unlike(filename,username,cb)
+{
+        try{
+        var result=false;
+        blah.get(filename, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var newfile = body1;
+                        if(newfile.likedby==undefined)
+                                newfile.likedby = [];
+                        if(newfile.likes==undefined)
+                                newfile.likes = 0;
+                        if(newfile.likedby.indexOf(username)!=-1)
+                        {
+                                var index = newfile.likedby.indexOf(username);
+                                newfile.likedby.splice(index,1);
+                                newfile.likes--;
+                        }
+                        blah.insert(newfile,filename,function(err2,body2){
+                                if(!err2)
+                                {
+                                        blah.get(username, {revs_info:true}, function(err3,body3) {
+                                                if(!err3)
+                                                {
+                                                        var findex = body3.liked.indexOf(filename);
+                                                        body3.liked.splice(findex,1);
+                                                        blah.insert(body3,username,function(err4,body4) {
+                                                                if(!err4)
+                                                                {
+                                                                        result = true;
+                                                                        cb(newfile,result);
+                                                                }
+                                                                else
+                                                                {
+                                                                        cb(err4,result);
+                                                                }
+                                                        })
+                                                }
+                                                else
+                                                {
+                                                        cb(err3,result);
+                                                }
+                                        })
+                                }
+                                else
+                                {
+                                        cb(err2,result);
+                                }
+                        })
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        });
+        }catch(err){console.log(err)}
 }
 
 function File_AddReadAccess(filename,newuser,cb)

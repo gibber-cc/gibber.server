@@ -34,24 +34,27 @@ var request         = require( 'request' ),
 
 function initializeFeed()
 {
-        var changes = new changesStream({db:'http://127.0.0.1:5984/gibbertest',feed:'continuous',since:"now",include_docs:true,heartbeat:15000});
-        changes.on('readable', function() {
-                var change = changes.read();
-                if(change.doc.type == 'user')
-                {
-                        for(i=0;i<users.length;i++)
+        try{
+                var changes = new changesStream({db:'http://127.0.0.1:5984/gibbertest',feed:'continuous',since:"now",include_docs:true,heartbeat:15000});
+                changes.on('readable', function() {
+                        var change = changes.read();
+                        if(change.doc.type == 'user')
                         {
-                                if(change.doc._id == users[i].username)
+                                for(i=0;i<users.length;i++)
                                 {
-                                        //emit SSE
-                                        console.log("SSE emitted for "+users[i].username);
-                                        //console.log(clients[users[i].username].pusher.toString());
-                                        try{clients[users[i].username].pusher(change.doc.notifications);}
-                                        catch(err){console.log(err);}
+                                        if(change.doc._id == users[i].username)
+                                        {
+                                                //emit SSE
+                                                console.log("SSE emitted for "+users[i].username);
+                                                //console.log(clients[users[i].username].pusher.toString());
+                                                try{clients[users[i].username].pusher(change.doc.notifications);}
+                                                catch(err){console.log(err);}
+                                        }
                                 }
                         }
-                }
-        });
+                });
+        }
+        catch(err){console.log(err)}
 }
 
 function findById(id, fn) {
@@ -886,7 +889,7 @@ app.post('/likefile', function(req, res, next) {
                 {
                         if(response1==true)
                         {
-                                res.send({success:true,msg:"Successfully liked file."})
+                                res.send({success:true,msg:"Successfully liked file.",filedata:err1})
                         }
                         else
                         {

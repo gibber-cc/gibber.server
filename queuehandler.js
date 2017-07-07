@@ -46,6 +46,7 @@ function file_obj()
 	this.setmetadata = File_SetMetadata;
 	this.setispublic = File_SetIsPublic;
         this.like = File_Like;
+        this.unlike = File_Unlike;
 	this.addreadaccess = File_AddReadAccess;
 	this.remreadaccess = File_RemReadAccess;
 	this.addwriteaccess = File_AddWriteAccess;
@@ -351,7 +352,7 @@ function File_SetIsPublic(filename,isPublic,cb)
 }
 
 /**
- * Sets a file as publicly viewable by anyone.
+ * Like a file.
  * Response format: true if successful, false if failed.
  * @param {string} filename - The name of the relevant file.
  * @param {string} username - The name of the user liking the file.
@@ -360,6 +361,19 @@ function File_SetIsPublic(filename,isPublic,cb)
 function File_Like(filename,username,cb)
 {
 	q.push(function(queuecb){couch_module.file.like(filename,username,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Unlike a file.
+ * Response format: true if successful, false if failed.
+ * @param {string} filename - The name of the relevant file.
+ * @param {string} username - The name of the user unliking the file.
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function File_Unlike(filename,username,cb)
+{
+	q.push(function(queuecb){couch_module.file.unlike(filename,username,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 
