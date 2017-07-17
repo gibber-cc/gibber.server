@@ -899,6 +899,25 @@ app.post('/likefile', function(req, res, next) {
         }
 })
 
+app.post('/unlikefile', function(req, res, next) {
+	if(!(req.isAuthenticated()))
+		res.send({ error:'you are not currently logged in.' })
+        else
+        {
+                queuehandler.file.unlike(req.body.filename,req.user.username,function(err1,response1)
+                {
+                        if(response1==true)
+                        {
+                                res.send({success:true,msg:"Successfully unliked file.",filedata:err1})
+                        }
+                        else
+                        {
+                                res.send({error:"failed to like file."})
+                        }
+                })
+        }
+})
+
 app.post('/userreadfile', function (req, res, next) {
 	var checkpublic = false;
 	request({ uri:designURI + '_view/publications?key="'+req.body.filename+'"', json: true }, function(e,r,b)
@@ -982,7 +1001,24 @@ app.post('/usercheckinfo', function(req, res, next) {
                 if(err)
                         res.send({error:"unable to retrieve user info"});
                 else
+                {
+                        response.password = "";
                         res.send({success:true,response:response});
+                }
+        })
+})
+
+app.post('/searchuser', function(req, res, next) {
+        queuehandler.user.checkinfo(req.body.username, function(err, response) {
+                if(err)
+                {
+                        res.send({error:"no user info found"});
+                }
+                else
+                {
+                        response.password = "";
+                        res.send({success:true,response:response});
+                }
         })
 })
 
