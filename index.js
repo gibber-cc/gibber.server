@@ -1008,6 +1008,32 @@ app.post('/usercheckinfo', function(req, res, next) {
         })
 })
 
+app.post('/sendfriendrequest', function(req, res, next) {
+        if(!(req.isAuthenticated()))
+                res.send({error:'you are not currently logged in.'})
+        queuehandler.user.sendfriendrequest(req.user.username, req.body.username, function(err, response) {
+                if(err)
+                {
+                        console.log(err);
+                        res.send({error:"unable to send friend request",response:response});
+                }
+                else
+                {
+                        notificationdata = {type:"FRIEND_REQUEST",source:req.user.username};
+                        queuehandler.user.notify(req.body.username,notificationdata,function(err,response) {
+                                if(!err)
+                                {
+                                        res.send({success:true,response:response});
+                                }
+                                else
+                                {
+                                        res.send({error:"unable to send friend request",response:response});
+                                }
+                        })
+                }
+        })
+})
+
 app.post('/searchuser', function(req, res, next) {
         queuehandler.user.checkinfo(req.body.username, function(err, response) {
                 if(err)

@@ -13,6 +13,7 @@ function user_obj()
 	this.destroy = User_Destroy;
         this.notify = User_Notify;
         this.getnotifications = User_GetNotifications;
+        this.sendfriendrequest = User_SendFriendRequest;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -172,9 +173,9 @@ function User_DeleteAllNotifications(username,cb)
  * @param {string} username - The name of the user
  * @param {function} cb - The callback function in the form of cb(err,response).
  */
-function User_AddFriend(username1,username2,cb)
+function User_SendFriendRequest(username1,username2,cb)
 {
-	q.push(function(queuecb){couch_module.user.addfriend(username1,username2,(err,response) => {cb(err,response); queuecb();});});
+	q.push(function(queuecb){couch_module.user.sendfriendrequest(username1,username2,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 
