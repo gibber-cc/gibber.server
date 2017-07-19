@@ -14,6 +14,7 @@ function user_obj()
         this.sendfriendrequest = User_SendFriendRequest;
         this.acceptfriendrequest = User_AcceptFriendRequest;
         this.rejectfriendrequest = User_RejectFriendRequest;
+        this.removefriend = User_RemoveFriend;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -397,6 +398,67 @@ function User_RejectFriendRequest(username1,username2,cb)
                                                                                         break;
                                                                                 }
                                                                         }
+                                                                        blah.insert(body1,username2,function(err1,body1){
+                                                                                if(!err1)
+                                                                                {
+                                                                                        result = true;
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                        })
+                                                                }
+                                                        }
+                                                        else
+                                                        {
+                                                                cb(err1,result);
+                                                        }
+                                                });
+                                        }
+                                        else
+                                        {
+                                                cb(err1,result);
+                                        }
+                                })
+                        }
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        });
+}
+
+function User_RemoveFriend(username1,username2,cb)
+{
+        var result = false;
+        blah.get(username1, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var userindex = body1.friends.indexOf(username2);
+                        if(userindex == -1)
+                        {
+                                cb({err:"could not find friend."},result);
+                        }
+                        else
+                        {
+                                body1.friends.splice(userindex,1);
+                                blah.insert(body1,username1,function(err1,body1){
+                                        if(!err1)
+                                        {
+                                                blah.get(username2, {revs_info: true}, function(err1,body1) {
+                                                        if(!err1)
+                                                        {
+                                                                var userindex = body1.friends.indexOf(username1);
+                                                                if(userindex == -1)
+                                                                {
+                                                                        cb({err:"could not find friend."},result);
+                                                                }
+                                                                else
+                                                                {
+                                                                        body1.friends.splice(userindex,1);
                                                                         blah.insert(body1,username2,function(err1,body1){
                                                                                 if(!err1)
                                                                                 {

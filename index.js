@@ -1076,6 +1076,22 @@ app.post('/rejectfriendrequest', function(req, res, next) {
         })
 })
 
+app.post('/removefriend', function(req, res, next) {
+        if(!(req.isAuthenticated()))
+                res.send({error:'you are not currently logged in.'})
+        queuehandler.user.removefriend(req.user.username, req.body.username, function(err, response) {
+                if(err)
+                {
+                        console.log(err);
+                        res.send({error:"unable to remove friend",response:response});
+                }
+                else
+                {
+                        res.send({success:true,response:response});
+                }
+        })
+})
+
 app.post('/searchuser', function(req, res, next) {
         queuehandler.user.checkinfo(req.body.username, function(err, response) {
                 if(err)
