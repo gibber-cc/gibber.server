@@ -15,6 +15,7 @@ function user_obj()
         this.getnotifications = User_GetNotifications;
         this.sendfriendrequest = User_SendFriendRequest;
         this.acceptfriendrequest = User_AcceptFriendRequest;
+        this.rejectfriendrequest = User_RejectFriendRequest;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -191,6 +192,19 @@ function User_SendFriendRequest(username1,username2,cb)
 function User_AcceptFriendRequest(username1,username2,cb)
 {
 	q.push(function(queuecb){couch_module.user.acceptfriendrequest(username1,username2,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Rejects friend request sent from username1 to username2
+ * Response format: true if successful, false if failed.
+ * @param {string} username1 - The name of the user who sent the request
+ * @param {string} username2 - The name of the user to whom the request is being sent
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_RejectFriendRequest(username1,username2,cb)
+{
+	q.push(function(queuecb){couch_module.user.rejectfriendrequest(username1,username2,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

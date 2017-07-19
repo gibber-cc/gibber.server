@@ -13,6 +13,7 @@ function user_obj()
         this.deleteallnotifications = User_DeleteAllNotifications;
         this.sendfriendrequest = User_SendFriendRequest;
         this.acceptfriendrequest = User_AcceptFriendRequest;
+        this.rejectfriendrequest = User_RejectFriendRequest;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -321,9 +322,78 @@ function User_AcceptFriendRequest(username1,username2,cb)
                                                                         body1.friends.push(username1);
                                                                         for(var i=0;i<body1.notifications.length;i++)
                                                                         {
+                                                                                if((body1.notifications[i].type=="FRIEND_REQUEST")&&(body1.notifications[i].source==username1))
+                                                                                {
+                                                                                        body1.notifications.splice(i,1);
+                                                                                        break;
+                                                                                }
+                                                                        }
+                                                                        blah.insert(body1,username2,function(err1,body1){
+                                                                                if(!err1)
+                                                                                {
+                                                                                        result = true;
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                        })
+                                                                }
+                                                        }
+                                                        else
+                                                        {
+                                                                cb(err1,result);
+                                                        }
+                                                });
+                                        }
+                                        else
+                                        {
+                                                cb(err1,result);
+                                        }
+                                })
+                        }
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        });
+}
+
+function User_RejectFriendRequest(username1,username2,cb)
+{
+        var result = false;
+        blah.get(username1, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var userindex = body1.pendingfriends.indexOf(username2);
+                        if(userindex == -1)
+                        {
+                                cb({err:"could not find pending request."},result);
+                        }
+                        else
+                        {
+                                body1.pendingfriends.splice(userindex,1);
+                                blah.insert(body1,username1,function(err1,body1){
+                                        if(!err1)
+                                        {
+                                                blah.get(username2, {revs_info: true}, function(err1,body1) {
+                                                        if(!err1)
+                                                        {
+                                                                var userindex = body1.pendingfriends.indexOf(username1);
+                                                                if(userindex == -1)
+                                                                {
+                                                                        cb({err:"could not find pending request."},result);
+                                                                }
+                                                                else
+                                                                {
+                                                                        body1.pendingfriends.splice(userindex,1);
+                                                                        for(var i=0;i<body1.notifications.length;i++)
+                                                                        {
                                                                                 if((body1.notifications[i].type=="FRIEND_REQUEST")&&(body1.notifications[i].source=username1))
                                                                                 {
-                                                                                        body1.notifications.splice[i,1];
+                                                                                        body1.notifications.splice(i,1);
                                                                                         break;
                                                                                 }
                                                                         }
