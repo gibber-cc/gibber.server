@@ -17,6 +17,7 @@ function user_obj()
         this.removefriend = User_RemoveFriend;
         this.follow = User_Follow;
         this.unfollow = User_Unfollow;
+        this.notifyfollowers = User_NotifyFollowers;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -613,6 +614,35 @@ function User_Unfollow(username1,username2,cb)
                         cb(err1,result);
                 }
         });
+}
+
+function User_NotifyFollowers(username,notificationdata,cb)
+{
+        var result=0;
+        blah.get(username, { revs_info:true }, function(err1,body1) {
+                if(!err1)
+                {
+                        body1.followers.forEach(function(follower){
+                                blah.get(follower, { revs_info:true }, function(err1,body1) {
+                                        if(!err1)
+                                        {
+                                                body1.notifications.push(notificationdata);
+                                                blah.insert(body1,follower,function(err1,body1) {
+                                                        if(err1)
+                                                        {
+                                                                console.log("notified a follower");
+                                                        }
+                                                })
+                                        }
+                                })
+                        });
+                        cb(err1,result);
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        })
 }
 
 function User_CheckIfAuthor(username,filename,cb)

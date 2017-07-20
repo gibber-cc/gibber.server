@@ -817,7 +817,21 @@ if( !(req.isAuthenticated()) ) {
 						        results = b.rows[i];
 				        }
 			        }*/
-			        res.send({ success: true, filedata: results.value });
+                                var notificationdata = {type:"FOLLOWEE_UPDATE",source:req.user.username,filename:req.body.filename}
+                                if(req.body.ispublic)
+                                {
+                                        queuehandler.user.notifyfollowers(req.user.username,notificationdata,function(err,response) {
+                                                if(!err)
+                                                {
+                                                        console.log("notified followers");
+                                                }
+                                                else
+                                                {
+                                                        console.log("didn't notify followers");
+                                                }
+                                        })
+                                }
+		                res.send({ success: true, filedata: results.value });
 		        });
 			//res.send({success:true, msg:"successfully published file.", filename: req.user.username+"/publications/"+req.body.filename}); //TODO: respond properly when file successfully published
                 }
@@ -1123,7 +1137,6 @@ app.post('/unfollowuser', function(req, res, next) {
                 }
         })
 })
-
 
 app.post('/searchuser', function(req, res, next) {
         queuehandler.user.checkinfo(req.body.username, function(err, response) {

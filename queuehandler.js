@@ -19,6 +19,7 @@ function user_obj()
         this.removefriend = User_RemoveFriend;
         this.follow = User_Follow;
         this.unfollow = User_Unfollow;
+        this.notifyfollowers = User_NotifyFollowers;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -247,6 +248,19 @@ function User_Follow(username1,username2,cb)
 function User_Unfollow(username1,username2,cb)
 {
 	q.push(function(queuecb){couch_module.user.unfollow(username1,username2,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Makes username1 no longer a follower of username2
+ * Response format: true if successful, false if failed.
+ * @param {string} username1 - The name of the user who requested the unfollow
+ * @param {string} username2 - The name of the user who is to be unfollowed
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function User_NotifyFollowers(username,notificationdata,cb)
+{
+	q.push(function(queuecb){couch_module.user.notifyfollowers(username,notificationdata,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 
