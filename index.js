@@ -1092,6 +1092,39 @@ app.post('/removefriend', function(req, res, next) {
         })
 })
 
+app.post('/followuser', function(req, res, next) {
+        if(!(req.isAuthenticated()))
+                res.send({error:'you are not currently logged in.'})
+        queuehandler.user.follow(req.user.username, req.body.username, function(err, response) {
+                if(err)
+                {
+                        console.log(err);
+                        res.send({error:"unable to follow user",response:response});
+                }
+                else
+                {
+                        res.send({success:true,response:response});
+                }
+        })
+})
+
+app.post('/unfollowuser', function(req, res, next) {
+        if(!(req.isAuthenticated()))
+                res.send({error:'you are not currently logged in.'})
+        queuehandler.user.unfollow(req.user.username, req.body.username, function(err, response) {
+                if(err)
+                {
+                        console.log(err);
+                        res.send({error:"unable to unfollow user",response:response});
+                }
+                else
+                {
+                        res.send({success:true,response:response});
+                }
+        })
+})
+
+
 app.post('/searchuser', function(req, res, next) {
         queuehandler.user.checkinfo(req.body.username, function(err, response) {
                 if(err)

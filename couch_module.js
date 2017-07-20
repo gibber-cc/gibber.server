@@ -15,6 +15,8 @@ function user_obj()
         this.acceptfriendrequest = User_AcceptFriendRequest;
         this.rejectfriendrequest = User_RejectFriendRequest;
         this.removefriend = User_RemoveFriend;
+        this.follow = User_Follow;
+        this.unfollow = User_Unfollow;
 	this.checkinfo = User_CheckInfo;
 	this.changepassword = User_ChangePassword;
 	this.checkifauthor = User_CheckIfAuthor;
@@ -459,6 +461,127 @@ function User_RemoveFriend(username1,username2,cb)
                                                                 else
                                                                 {
                                                                         body1.friends.splice(userindex,1);
+                                                                        blah.insert(body1,username2,function(err1,body1){
+                                                                                if(!err1)
+                                                                                {
+                                                                                        result = true;
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                        cb(err1,result);
+                                                                                }
+                                                                        })
+                                                                }
+                                                        }
+                                                        else
+                                                        {
+                                                                cb(err1,result);
+                                                        }
+                                                });
+                                        }
+                                        else
+                                        {
+                                                cb(err1,result);
+                                        }
+                                })
+                        }
+                }
+                else
+                {
+                        cb(err1,result);
+                }
+        });
+}
+
+function User_Follow(username1,username2,cb)
+{
+        var result=false;
+        blah.get(username1, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var following=[];
+                        if(body1.following==undefined)
+                        {
+                                body1.following = following.slice();
+                        }
+                        body1.following.push(username2);
+                        blah.insert(body1,username1,function(err2,body2) {
+                                if(!err1)
+                                {
+                                        console.log("successfully added user2 to user1's following list");
+                                        blah.get(username2, {revs_info: true}, function(err1,body1) {
+                                                if(!err1)
+                                                {
+                                                        var followers=[];
+                                                        if(body1.followers==undefined)
+                                                        {
+                                                                body1.followers = followers.slice();
+                                                        }
+                                                        body1.followers.push(username1);
+                                                        blah.insert(body1,username2,function(err2,body2) {
+                                                                if(!err1)
+                                                                {
+                                                                        console.log("successfully added user1 to user2's list");
+                                                                        cb(err1,true);
+                                                                }
+                                                                else
+                                                                {
+                                                                        console.log("couldn't add user1 to user2's friend list");
+                                                                        cb({err:"add pending friend operation probably did not succeed"},false);
+                                                                }
+                                                        })
+                                                }
+                                                else
+                                                {
+                                                        console.log("couldn't find user2");
+                                                        cb({err:"add pending friend operation probably did not succeed"},false);
+                                                }
+                                        })
+                                }
+                                else
+                                {
+                                        console.log("couldn't add user 2 to user1's pending friend list");
+                                        cb({err:"add pending friend operation probably did not succeed"},false);
+                                }
+                        })
+                }
+                else
+                {
+                        console.log("couldn't find user1");
+                        cb({err:"add pending friend operation probably did not succeed"},false);
+                }
+        })
+}
+
+function User_Unfollow(username1,username2,cb)
+{
+        var result = false;
+        blah.get(username1, {revs_info: true}, function(err1,body1) {
+                if(!err1)
+                {
+                        var userindex = body1.following.indexOf(username2);
+                        if(userindex == -1)
+                        {
+                                cb({err:"could not find followed user."},result);
+                        }
+                        else
+                        {
+                                body1.following.splice(userindex,1);
+                                blah.insert(body1,username1,function(err1,body1){
+                                        if(!err1)
+                                        {
+                                                blah.get(username2, {revs_info: true}, function(err1,body1) {
+                                                        if(!err1)
+                                                        {
+                                                                var userindex = body1.followers.indexOf(username1);
+                                                                if(userindex == -1)
+                                                                {
+                                                                        cb({err:"could not find follower."},result);
+                                                                }
+                                                                else
+                                                                {
+                                                                        body1.followers.splice(userindex,1);
                                                                         blah.insert(body1,username2,function(err1,body1){
                                                                                 if(!err1)
                                                                                 {
