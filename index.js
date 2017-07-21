@@ -749,7 +749,7 @@ app.get( '/login', function(req, res){
 
 app.get( '/loginStatus', function( req, res ) {
   if( req.isAuthenticated() ) {
-    res.send({ username: req.user.username })
+    res.send({ success:true, username: req.user.username })
   }else{
     res.send({ username: null })
   }
