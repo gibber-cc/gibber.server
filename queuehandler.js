@@ -49,6 +49,7 @@ function group_obj()
 function file_obj()
 {
 	this.publish = File_Publish;
+        this.fork = File_Fork;
 	this.edit = File_Edit;
 	this.setmetadata = File_SetMetadata;
 	this.setispublic = File_SetIsPublic;
@@ -393,6 +394,20 @@ function User_CheckWriteAccessFile(username,filename,cb)
 function File_Publish(username,filename,text,date,ispublic,language,tags,notes,cb)
 {
 	q.push(function(queuecb){couch_module.file.publish(username,filename,text,date,ispublic,language,tags,notes,(err,response) => {cb(err,response); queuecb();});});
+	ensurequeue();
+}
+
+/**
+ * Forks an existing file.
+ * Response format: filedata if successful, false if failed.
+ * @param {string} username - The name of the user requesting the fork
+ * @param {string} newname - The new name of the file. Should be null if forking another user's file
+ * @param {string} filename - The name of the file to be forked.
+ * @param {function} cb - The callback function in the form of cb(err,response).
+ */
+function File_Fork(username,newname,filename,cb)
+{
+	q.push(function(queuecb){couch_module.file.fork(username,newname,filename,(err,response) => {cb(err,response); queuecb();});});
 	ensurequeue();
 }
 

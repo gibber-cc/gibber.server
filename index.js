@@ -839,6 +839,22 @@ if( !(req.isAuthenticated()) ) {
 	);
 })
 
+app.post( '/filefork', function( req, res, next ) {
+if( !(req.isAuthenticated()) ) {
+    res.send({ error:'you are not currently logged in.' })
+	}
+	queuehandler.file.fork(req.user.username,req.body.newname,req.body.filename,function(err1,response1) {
+                if(!err1)
+                {
+                        res.send({success:true,response:"file successfully forked."})
+                }
+                else
+                {
+                        res.send({error:"could not fork file"});
+                }
+	});
+})
+
 app.post( '/filesetmetadata', function( req, res, next ) {
 if( !(req.isAuthenticated()) ) {
     res.send({ error:'you are not currently logged in.' })

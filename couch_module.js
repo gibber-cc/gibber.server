@@ -47,6 +47,7 @@ function group_obj()
 function file_obj()
 {
 	this.publish = File_Publish;
+        this.fork = File_Fork;
 	this.edit = File_Edit;
 	this.setmetadata = File_SetMetadata;
 	this.setispublic = File_SetIsPublic;
@@ -822,6 +823,45 @@ function File_Publish(username,filename,text,date,ispublic,language,tags,notes,c
 		result = true;
 	cb(err,result);
 	});
+}
+
+function File_Fork(username,newname,filename,cb)
+{
+        var result = false;
+        blah.get(filename, { revs_info:true }, function(err1,body1) {
+                if(!err1)
+                {
+                        var newfilename=null;
+                        if(newname==null)
+                        {
+                                newfilename = username+'/publications/'+filename.substr(filename.lastIndexOf('/')+1);
+                        }
+                        else
+                        {
+                                newfilename = username+'/publications/'+newname;
+                        }
+                        body1.forkdata = {body1.author,body1._id};
+                        body1.author = username;
+                        blah.insert(body1,newfilename,function(err1,body1) {
+                                if(!err1)
+                                {
+                                        console.log("successfully forked file");
+                                        result = true;
+                                        cb(err1,body1);
+                                }
+                                else
+                                {
+                                        console.log("failed to fork file");
+                                        cb(err1,result);
+                                }
+                        })
+                }
+                else
+                {
+                        console.log("couldn't find file to fork");
+                        cb(err1,result);
+                }
+        })
 }
 
 function File_Edit(filename,newtext,cb)
