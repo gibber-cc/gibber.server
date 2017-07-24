@@ -840,7 +840,7 @@ function File_Fork(username,newname,filename,cb)
                         {
                                 newfilename = username+'/publications/'+newname;
                         }
-                        body1.forkdata = {body1.author,body1._id};
+                        body1.forkdata = [body1.author,body1._id];
                         body1.author = username;
                         blah.insert(body1,newfilename,function(err1,body1) {
                                 if(!err1)
