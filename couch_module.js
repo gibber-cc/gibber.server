@@ -845,9 +845,37 @@ function File_Fork(username,newname,filename,cb)
                         blah.insert(body1,newfilename,function(err1,body1) {
                                 if(!err1)
                                 {
-                                        console.log("successfully forked file");
-                                        result = true;
-                                        cb(err1,body1);
+                                        blah.get(filename, { revs_info:true }, function(err1,body1) {
+                                                if(!err1)
+                                                {
+                                                        if(body1.forks == undefined)
+                                                        {
+                                                                body1.forks=1;
+                                                        }
+                                                        else
+                                                        {
+                                                                body1.forks+=1;
+                                                        }
+                                                        blah.insert(body1, filename, function(err2,body2) {
+                                                                if(!err2)
+                                                                {
+                                                                        console.log("successfully forked file");
+                                                                        result = true;
+                                                                        cb(err2,body1);
+                                                                }
+                                                                else
+                                                                {
+                                                                        console.log("failed to fork file");
+                                                                        cb(err2,result);
+                                                                }
+                                                        })
+                                                }
+                                                else
+                                                {
+                                                        console.log("failed to fork file");
+                                                        cb(err1,result);
+                                                }
+                                        })
                                 }
                                 else
                                 {

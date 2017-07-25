@@ -846,7 +846,9 @@ if( !(req.isAuthenticated()) ) {
 	queuehandler.file.fork(req.user.username,req.body.newname,req.body.filename,function(err1,response1) {
                 if(!err1)
                 {
-                        res.send({success:true,response:"file successfully forked."})
+                        console.log("FORK RESPONSE");
+                        console.log(response1);
+                        res.send({success:true,response:response1})
                 }
                 else
                 {
