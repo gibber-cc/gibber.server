@@ -1156,7 +1156,7 @@ app.post('/unfollowuser', function(req, res, next) {
         })
 })
 
-app.post('/searchuser', function(req, res, next) {
+app.post('/getuser', function(req, res, next) {
         queuehandler.user.checkinfo(req.body.username, function(err, response) {
                 if(err)
                 {

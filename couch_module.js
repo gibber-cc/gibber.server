@@ -78,7 +78,7 @@ module.exports = couch_module;
 function User_Create(username,password,date,email,website,affiliation,cb)
 {
 	var result = false;
-	blah.insert({"type": "user","password": password,"grouplist":[],"joinDate": date,"website": website,"affiliation": affiliation,"email": email,"following": [],"friends": []}, username, function(err, body) {
+	blah.insert({"type": "user","password": password,"grouplist":[],"joinDate": date,"website": website,"affiliation": affiliation,"email": email,"followers": [],"following": [],"friends": []}, username, function(err, body) {
 	if (!err)
 		cb(err,true);
 	else
