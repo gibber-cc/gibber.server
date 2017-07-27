@@ -1008,19 +1008,19 @@ app.post('/userreadfile', function (req, res, next) {
 	});
 })
 
-app.post( '/createNewUser', function( req, res, next ) {
+app.post( '/createnewuser', function( req, res, next ) {
   var date = new Date(),
       day  = date.getDate(),
       month = date.getMonth() + 1,
       year = date.getFullYear(),
       time = date.toLocaleTimeString()
-  queuehandler.user.create(req.body.username, req.body.password, [year,month,day,time], req.body.email, req.body.website, req.body.affiliation,
+  queuehandler.user.create(req.body.dusername, req.body.dpassword, [year,month,day,time], req.body.email, req.body.website, req.body.affiliation,
     function (error, response) {
       if( error ) {
         console.log( error )
         res.send({ msg: 'The server was unable to create your account' })
       } else {
-        res.send({ msg:'User account created' })
+        res.send({ success:true, msg:'User account created' })
       }
     }
   )
