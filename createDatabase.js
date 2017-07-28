@@ -44,6 +44,9 @@ var makeUsers = function(cb) {
           email:  name+'@'+name+'.com',
           following: [],
           friends: [],
+          followers: [],
+          following: [],
+          following: [],
           grouplist: []
         }},
         function (error, response, body) {
