@@ -91,11 +91,19 @@ function User_CheckInfo(username,cb)
 {
 	//console.log("user checkinfo is triggering");
 	var result = {};
-	blah.get(username, { revs_info: true }, function(err, body) {
-	if(!err)
-		result = body;
-	cb(err,result);
-	});
+        if(username!=undefined)
+        {
+	        blah.get(username, { revs_info: true }, function(err, body) {
+	        if(!err)
+		        result = body;
+        	cb(err,result);
+        	});
+        }
+        else
+        {
+                cb({err:"username not supplied"},result);
+        }
+
 }
 
 /*This function, and all other functions that modify a document work by using the get function to find the appropriate document, reading it and then overwriting it with the modified values.*/

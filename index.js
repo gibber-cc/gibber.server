@@ -1165,6 +1165,8 @@ app.post('/getuser', function(req, res, next) {
                 else
                 {
                         response.password = "";
+                        console.log("RESPONSE");
+                        console.log(response);
                         res.send({success:true,response:response});
                 }
         })
