@@ -1020,7 +1020,7 @@ app.post( '/createnewuser', function( req, res, next ) {
         console.log( error )
         res.send({ msg: 'The server was unable to create your account' })
       } else {
-        res.send({ success:true, msg:'User account created' })
+        res.send({ success:true, msg:'User account created', username: req.body.dusername })
       }
     }
   )

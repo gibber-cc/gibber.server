@@ -7,7 +7,8 @@ This is the server component for Gibber. To install in Gibber:
 2. Install and run CouchDB: http://docs.couchdb.org/en/latest/install/
 3. cd into the top level of the main Gibber repo
 4. Run `npm install gibber.server`. This will install gibber.server in the `node_modules` directory of the Gibber repo.
-5. To create the initial gibber database, run: `node node_modules/gibber.server/createDatabase`.  
+5. Replace /node_modules/changes-stream/index.js with /changes-stream-fix/index.js.
+6. To create the initial gibber database, run: `node node_modules/gibber.server/createDatabase`.
 
 The dependencies installed with gibber.server are highly version specific in many cases, so don't go updating any of these modules.
 
