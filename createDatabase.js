@@ -10,6 +10,13 @@ var request         = require( 'request' ),
     ],
     pubCount = {}
 
+    /*
+      Newer versions of couchDB require a user/pass in the http request,
+      Uncomment the line below & replace the {{placeholders}}'s with your admin user/pass'
+    */
+
+    //serverAddress   = 'http://{{username}}:{{password}}@localhost:5984/' + databaseName;
+
 var deleteDatabase = function(cb) {
   request({ 
     url:serverAddress,
